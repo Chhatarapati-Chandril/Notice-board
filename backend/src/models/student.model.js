@@ -3,7 +3,7 @@ import pool from "../db/db.js"
 // find student by roll number
 export const findStudentByRollNo = async (rollNo) => {
     const [rows] = await pool.query(
-        `SELECT id, roll_no, email, password_hash, is_first_login
+        `SELECT id, roll_no, email, password_hash
         FROM students
         WHERE roll_no = ?`,
         [rollNo]
@@ -14,7 +14,7 @@ export const findStudentByRollNo = async (rollNo) => {
 // find student by id
 export const findStudentById = async (id) => {
     const [rows] = await pool.query(
-        `SELECT id, roll_no, email, password_hash, is_first_login
+        `SELECT id, roll_no, email, password_hash
         FROM students
         WHERE id = ?`,
         [id]
@@ -37,7 +37,7 @@ export const updateStudentPassword = async (id, password_hash) => {
     await pool.query(
         `UPDATE students 
         SET 
-            password_hash = ?, is_first_login = FALSE
+            password_hash = ?
         WHERE id = ?`,
         [password_hash, id]
     )

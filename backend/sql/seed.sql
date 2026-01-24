@@ -17,3 +17,30 @@ INSERT IGNORE INTO notice_categories (name) VALUES
 ('General');
 
 
+-- =========================
+-- SAMPLE STUDENTS
+-- =========================
+
+INSERT INTO students (
+  roll_no,
+  email,
+  password_hash,
+) VALUES
+(
+  '12411025',
+  'chhatarapaticse12411025@iiitsonepat.ac.in',
+  '$2b$10$AU0fejSi3NSAKj2iUYFIkOnhEyddFv9Tss4AuKjK.B2xcBUpKXFDK',
+);
+
+-- =========================
+-- SAMPLE PROFESSORS
+-- =========================
+
+INSERT INTO professors (
+  email,
+  password_hash,
+) VALUES
+(
+  'prof1@iiitsonepat.ac.in',
+  '$2b$10$2jPbdWKc/hXyM82Xk2T12eUwYmY2kmntfXJ6c8mDB1qqc49RePauG',
+);

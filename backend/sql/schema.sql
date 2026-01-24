@@ -8,7 +8,6 @@ CREATE TABLE students (
   roll_no CHAR(8) NOT NULL UNIQUE,
   email VARCHAR(100) UNIQUE NULL,
   password_hash VARCHAR(255) NOT NULL,
-  is_first_login BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 desc students;
@@ -17,7 +16,6 @@ CREATE TABLE professors (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  is_first_login BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 desc professors;
@@ -68,4 +66,16 @@ CREATE TABLE password_reset_otp (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 desc password_reset_otp;
+
+CREATE TABLE refresh_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_type ENUM('STUDENT', 'PROFESSOR') NOT NULL,
+  user_id INT NOT NULL,
+  token VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+desc refresh_tokens;
+
+
 

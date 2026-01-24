@@ -3,7 +3,7 @@ import pool from "../db/db.js";
 // find prof by email
 export const findProfessorByEmail = async (email) => {
     const [rows] = await pool.query(
-        `SELECT id, email, password_hash, is_first_login
+        `SELECT id, email, password_hash
         FROM professors
         WHERE email = ?`,
         [email]
@@ -14,7 +14,7 @@ export const findProfessorByEmail = async (email) => {
 // find prof by id
 export const findProfessorById = async (id) => {
     const [rows] = await pool.query(
-        `SELECT id, email, password_hash, is_first_login
+        `SELECT id, email, password_hash
         FROM professors
         WHERE id = ?`,
         [id]
@@ -36,9 +36,7 @@ export const createProfessor = async ({email, password_hash}) => {
 export const updateProfessorPassword = async (id, password_hash) => {
     await pool.query(
         `UPDATE professors 
-        SET 
-            password_hash = ?, is_first_login = FALSE
-        WHERE id = ?`,
+        SET password_hash = ? WHERE id = ?`,
         [password_hash, id]
     )
 }
