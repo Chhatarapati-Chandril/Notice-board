@@ -2,53 +2,78 @@ import axios from "axios";
 
 let reduxStore;
 
-// 👇 THIS EXPORT WAS MISSING
+// Inject redux store (must be called once in store setup)
 export const injectStore = (store) => {
   reduxStore = store;
 };
 
 const api = axios.create({
-  baseURL: "/api/v1", // backend base
+  baseURL: "http://localhost:8080/api/v1", // ✅ CORRECT
+  withCredentials: true,                  // ✅ REQUIRED for refresh token cookie
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach access token
-api.interceptors.request.use((config) => {
-  const token = reduxStore?.getState()?.auth?.token;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// =======================
+// REQUEST INTERCEPTOR
+// =======================
+api.interceptors.request.use(
+  (config) => {
+    const token = reduxStore?.getState()?.auth?.token;
 
-// Auto refresh on 401
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// =======================
+// RESPONSE INTERCEPTOR
+// =======================
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Safety checks
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+
+    // ❌ Never retry refresh endpoint itself
+    if (originalRequest.url?.includes("/auth/refresh")) {
+      reduxStore?.dispatch({ type: "auth/logout" });
+      return Promise.reject(error);
+    }
+
+    // Handle expired access token
+    if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const res = await api.post("/auth/refresh");
 
+        const { accessToken, role } = res.data.data;
+
         reduxStore.dispatch({
           type: "auth/loginSuccess",
           payload: {
-            token: res.data.data.accessToken,
-            role: res.data.data.role,
+            token: accessToken,
+            role,
           },
         });
 
-        originalRequest.headers.Authorization =
-          `Bearer ${res.data.data.accessToken}`;
-
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
-      } catch {
-        reduxStore.dispatch({ type: "auth/logout" });
+
+      } catch (refreshError) {
+        reduxStore?.dispatch({ type: "auth/logout" });
+        return Promise.reject(refreshError);
       }
     }
 
