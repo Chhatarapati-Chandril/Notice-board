@@ -1,5 +1,14 @@
 import api from "./axios";
+import { loginSuccess, logout } from "./authslice";
 
+export const restoreSession = () => async (dispatch) => {
+  try {
+    const res = await api.post("/auth/refresh");
+    dispatch(loginSuccess(res.data.data));
+  } catch {
+    dispatch(logout());
+  }
+};
 // Student login
 export const studentLogin = (payload) =>
   api.post("/auth/student/login", payload);

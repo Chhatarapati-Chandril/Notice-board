@@ -1,43 +1,59 @@
-// App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import Login from "./pages/login";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+
+import { restoreSession } from "./redux/authapi.js";
+
+import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import NoticeBoard from "./pages/NoticeBoard";
 import PostNotice from "./pages/PostNotice";
 
 function App() {
-  const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
+  const dispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(restoreSession());
+  }, []);
+
+  if (loading) return <div>Checking session...</div>;
 
   return (
     <Routes>
       <Route
         path="/"
-        element={isLoggedIn ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated
+            ? <Navigate to="/home" replace />
+            : <Navigate to="/login" replace />
+        }
       />
       <Route
         path="/login"
-        element={isLoggedIn ? <Navigate to="/home" replace /> : <Login />}
+        element={
+          isAuthenticated ? <Navigate to="/home" replace /> : <Login />
+        }
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-
-      {/* Home route */}
       <Route
         path="/home/*"
-        element={isLoggedIn ? <Home /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated ? <Home /> : <Navigate to="/login" replace />
+        }
       />
-
-      {/* Notice Board */}
       <Route
         path="/noticeboard"
-        element={isLoggedIn ? <NoticeBoard /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated ? <NoticeBoard /> : <Navigate to="/login" replace />
+        }
       />
-
-      {/* Post notice (professor only) */}
       <Route
         path="/post-notice"
-        element={isLoggedIn ? <PostNotice /> : <Navigate to="/login" replace />}
+        element={
+          isAuthenticated ? <PostNotice /> : <Navigate to="/login" replace />
+        }
       />
     </Routes>
   );
