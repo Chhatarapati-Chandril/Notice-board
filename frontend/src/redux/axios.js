@@ -2,14 +2,14 @@ import axios from "axios";
 
 let reduxStore;
 
-// Inject redux store (must be called once in store setup)
+// Inject redux store
 export const injectStore = (store) => {
   reduxStore = store;
 };
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api/v1", // ✅ CORRECT
-  withCredentials: true,                  // ✅ REQUIRED for refresh token cookie
+  baseURL: "/api/v1",          // ✅ RELATIVE
+  withCredentials: true,       // ✅ REQUIRED
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,14 +21,12 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = reduxStore?.getState()?.auth?.token;
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
-  (error) => Promise.reject(error)
+  Promise.reject
 );
 
 // =======================
@@ -39,41 +37,33 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Safety checks
     if (!error.response) {
       return Promise.reject(error);
     }
 
-    // ❌ Never retry refresh endpoint itself
+    // 🚫 Never retry refresh endpoint
     if (originalRequest.url?.includes("/auth/refresh")) {
       reduxStore?.dispatch({ type: "auth/logout" });
       return Promise.reject(error);
     }
 
-    // Handle expired access token
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const res = await api.post("/auth/refresh");
-
         const { accessToken, role } = res.data.data;
 
         reduxStore.dispatch({
           type: "auth/loginSuccess",
-          payload: {
-            token: accessToken,
-            role,
-          },
+          payload: { token: accessToken, role },
         });
 
-        // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
 
-      } catch (refreshError) {
+      } catch {
         reduxStore?.dispatch({ type: "auth/logout" });
-        return Promise.reject(refreshError);
       }
     }
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../redux/axios";
 import { logout } from "../redux/authslice";
 
 export default function ProfileMenu() {
@@ -23,10 +23,12 @@ export default function ProfileMenu() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("/auth/logout", {}, { withCredentials: true });
+      // backend logout (clears refresh token cookie)
+      await api.post("/auth/logout");
     } catch (err) {
-      console.error("Logout error", err);
+      console.error("Logout API error", err);
     } finally {
+      // always clear frontend state
       dispatch(logout());
       navigate("/login");
     }
@@ -39,7 +41,6 @@ export default function ProfileMenu() {
         onClick={() => setOpen(!open)}
         className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold cursor-pointer hover:scale-105 transition"
       >
-        {/* Random DP letter */}
         U
       </div>
 
