@@ -164,7 +164,7 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full bg-gray-300 text-gray-900 font-semibold py-2 rounded-md"
+              className="w-full bg-gray-300 text-gray-900 font-semibold py-2 rounded-md cursor-pointer"
             >
               Log in
             </button>
