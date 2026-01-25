@@ -1,18 +1,23 @@
 import bcrypt from "bcrypt";
-import crypto from "crypto";
+import jwt from "jsonwebtoken";
+
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 
 import { findStudentByRollNo } from "../models/student.model.js";
 import { findProfessorByEmail } from "../models/professor.model.js";
-import { createPasswordResetOtp } from "../models/passwordResetOtp.model.js";
+import { findRefreshToken } from "../models/refreshToken.model.js";
 
 import normalizeRollNo from "../validators/rollno.rule.js";
 import normalizeEmail from "../validators/email.rule.js";
 
 import { issueTokens } from "../services/auth.service.js";
-import { resetPasswordService, sendPasswordResetOtp } from "../services/passwordReset.service.js";
+import {
+  resetPasswordService,
+  sendPasswordResetOtp,
+  verifyOtpService,
+} from "../services/passwordReset.service.js";
 
 import { cookieOptions } from "../constants.js";
 
@@ -116,13 +121,70 @@ export const professorLogin = asyncHandler(async (req, res) => {
  */
 export const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
-  if (refreshToken) {
+
+  // Case 1: authenticated user (logout from all devices)
+  if (req.user) {
+    await deleteAllRefreshTokensForUser(req.user.id, req.user.role);
+  }
+
+  // Case 2: fallback logout (single session)
+  else if (refreshToken) {
     await deleteRefreshToken(refreshToken);
   }
 
+  res.clearCookie("accessToken", cookieOptions);
   res.clearCookie("refreshToken", cookieOptions);
 
   return res.status(200).json(new ApiResponse(null, "Logged out successfully"));
+});
+
+/**
+ * REFRESH - ACCESS TOKEN
+ */
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies?.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized request");
+  }
+
+  // 1. Verify JWT
+  let decoded;
+  try {
+    decoded = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
+  } catch {
+    throw new ApiError(401, "Invalid or expired refresh token");
+  }
+
+  // 2. Check token exists in DB (not revoked)
+  const storedToken = await findRefreshToken(incomingRefreshToken);
+  if (!storedToken) {
+    throw new ApiError(401, "Refresh token revoked");
+  }
+
+  // 3. Rotate tokens (important)
+  await deleteRefreshToken(incomingRefreshToken);
+
+  const { accessToken, refreshToken } = await issueTokens({
+    userId: decoded.userId,
+    role: decoded.role,
+  });
+
+  // 4. Set new refresh token cookie
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+
+  return res.status(200).json(
+    new ApiResponse(
+      {
+        accessToken,
+        role: decoded.role,
+      },
+      "Access token refreshed successfully",
+    ),
+  );
 });
 
 /**
@@ -147,13 +209,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     if (!user?.email) {
       throw new ApiError(
         400,
-        "Email not registered for this roll number. Contact admin."
+        "Email not registered for this roll number. Contact admin.",
       );
     }
     userId = user.id;
     userEmail = user.email;
-  } 
-  else if (role === "PROFESSOR") {
+  } else if (role === "PROFESSOR") {
     const normalizedEmail = normalizeEmail(email);
     if (!normalizedEmail) {
       throw new ApiError(400, "Invalid email");
@@ -165,8 +226,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
     userId = user.id;
     userEmail = user.email;
-  } 
-  else {
+  } else {
     throw new ApiError(400, "Invalid role");
   }
 
@@ -174,26 +234,36 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   await sendPasswordResetOtp({
     userId,
     userType: role,
-    email: userEmail
-  })
+    email: userEmail,
+  });
 
-  return res.status(200).json(
-    new ApiResponse(null, "Verification code sent to registered email")
-  )
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Verification code sent to registered email"));
+});
 
+/**
+ * VERIFY OTP
+ */
+export const verifyOtp = asyncHandler(async (req, res) => {
+  const { otp } = req.body;
+
+  const reset_token = await verifyOtpService({ otp });
+
+  return res
+    .status(200)
+    .json(new ApiResponse({ reset_token }, "OTP verified successfully"));
 });
 
 /**
  * RESET PASSWORD
  */
 export const resetPassword = asyncHandler(async (req, res) => {
-    const { role, roll_no, email, otp, new_password } = req.body
+  const { reset_token, new_password } = req.body;
 
-    await resetPasswordService({
-        role, roll_no, email, otp, new_password
-    })
+  await resetPasswordService({ reset_token, new_password });
 
-    return res.status(200).json(
-        new ApiResponse(null, "Password reset successfully")
-    )
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Password reset successfully"));
+});

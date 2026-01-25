@@ -1,13 +1,16 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
 import { BCRYPT_SALT_ROUNDS } from "../constants.js";
 import { generateOtp, getOtpExpiry } from "../utils/otp.js";
 
-import { createPasswordResetOtp, findValidOtp, markOtpUsed } from "../models/passwordResetOtp.model.js";
-import { findStudentByRollNo, updateStudentPassword } from "../models/student.model.js";
-import { findProfessorByEmail, updateProfessorPassword } from "../models/professor.model.js";
-
-import normalizeRollNo from "../validators/rollno.rule.js";
-import normalizeEmail from "../validators/email.rule.js";
+import {
+  createPasswordResetOtp,
+  findValidOtpByOtp,
+  markOtpUsed,
+} from "../models/passwordResetOtp.model.js";
+import { updateStudentPassword } from "../models/student.model.js";
+import { updateProfessorPassword } from "../models/professor.model.js";
 
 import { devLog } from "../utils/logger.js";
 import ApiError from "../utils/ApiError.js";
@@ -16,106 +19,95 @@ import { sendEmail } from "../utils/mailer.js";
 /**
  * SEND OTP
  */
-export const sendPasswordResetOtp = async ({ 
-    userId, 
-    userType, 
-    email 
-}) => {
-    const otp = generateOtp();
-    const otpHash = await bcrypt.hash(otp, BCRYPT_SALT_ROUNDS);
-    const expiresAt = getOtpExpiry();
+export const sendPasswordResetOtp = async ({ userId, userType, email }) => {
+  const otp = generateOtp();
+  const otpHash = await bcrypt.hash(otp, BCRYPT_SALT_ROUNDS);
+  const expiresAt = getOtpExpiry();
 
-    await createPasswordResetOtp({
-        userId,
-        userType,
-        otpHash,
-        expiresAt,
-    });
+  await createPasswordResetOtp({
+    userId,
+    userType,
+    otpHash,
+    expiresAt,
+  });
 
-    devLog("OTP: ", otp);
+  devLog("OTP: ", otp);
 
-    await sendEmail({
-        to: email,
-        subject: "Password Reset Code",
-        text: `Your password reset code is ${otp}. \nIt is valid for 10 minutes.`
-    })
+  await sendEmail({
+    to: email,
+    subject: "Password Reset Code",
+    text: `Your password reset code is ${otp}. \nIt is valid for 10 minutes.`,
+  });
 
-    return true;
-}
-
+  return true;
+};
 
 /**
- * RESET PASSWORD
+ * VERIFY OTP
  */
-export const resetPasswordService = async ({
-    role,
-    roll_no,
-    email,
-    otp,
-    new_password
-}) => {
-    let user 
-    let userId
+export const verifyOtpService = async ({ otp }) => {
+  if (!otp) {
+    throw new ApiError(400, "OTP is required");
+  }
 
-    // 1. identify user
-    if (role === "STUDENT") {
-        const normalizedRollNo = normalizeRollNo(roll_no)
-        if (!normalizedRollNo) {
-            throw new ApiError(400, "Invalid roll no")
-        }
-        user = await findStudentByRollNo(normalizedRollNo)
-        if (!user) {
-            throw new ApiError(404, "Student not found");
-        }
-    }
-    else if (role === "PROFESSOR") {
-        const normalizedEmail = normalizeEmail(email)
-        if (!normalizedEmail) {
-            throw new ApiError(400, "Invalid email")
-        }
-        user = await findProfessorByEmail(normalizedEmail)
-        if (!user) {
-            throw new ApiError(404, "Professor not found");
-        }
-    }
-    else {
-        throw new ApiError(400, "Invalid role")
-    }
+  // 1. find latest unused OTP (across users)
+  const otpRecord = await findValidOtpByOtp();
+  if (!otpRecord) {
+    throw new ApiError(400, "Invalid or expired OTP");
+  }
 
-    userId = user.id
+  // 2. verify OTP
+  const isValid = await bcrypt.compare(otp, otpRecord.otp);
+  if (!isValid) {
+    throw new ApiError(400, "Invalid OTP");
+  }
 
-    // 2. fetch latest valid otp
-    const otpRecord = await findValidOtp({
-        userId,
-        userType: role
-    })
-    if (!otpRecord) {
-        throw new ApiError(400, "Invalid or expired OTP")
-    }
+  // 3. issue short-lived RESET TOKEN
+  const reset_token = jwt.sign(
+    {
+      userId: otpRecord.user_id,
+      role: otpRecord.user_type,
+      otpId: otpRecord.id,
+    },
+    process.env.RESET_TOKEN_SECRET,
+    { expiresIn: "10m" },
+  );
 
-    // 3. verify otp
-    const isOtpValid = await bcrypt.compare(otp, otpRecord.otp)
-    if (!isOtpValid) {
-        throw new ApiError(400, "Invalid OTP")
-    }
+  return reset_token;
+};
 
-    // 4. hash new password
-    const hashedPassword = await bcrypt.hash(new_password, BCRYPT_SALT_ROUNDS)
+/**
+ * RESET NEW PASSWORD
+ */
+export const resetPasswordService = async ({ reset_token, new_password }) => {
+  if (!reset_token || !new_password) {
+    throw new ApiError(400, "Reset token and new password required");
+  }
 
-    // 5. update password
-    if (role === "STUDENT") {
-        await updateStudentPassword(userId, hashedPassword)
-    }
-    else if (role === "PROFESSOR") {
-        await updateProfessorPassword(userId, hashedPassword)
-    }
-    else {
-        throw new ApiError(400, "Can not update password")
-    }
+  // 1. verify reset token
+  let decoded;
+  try {
+    decoded = jwt.verify(reset_token, process.env.RESET_TOKEN_SECRET);
+  } catch {
+    throw new ApiError(401, "Invalid or expired reset token");
+  }
 
-    // 6. mark otp as used
-    await markOtpUsed(otpRecord.id)
+  const { userId, role, otpId } = decoded;
 
-    return true
+  // 2. hash password
+  const hashedPassword = await bcrypt.hash(new_password, BCRYPT_SALT_ROUNDS);
 
-}
+  // 3. update password
+  if (role === "STUDENT") {
+    await updateStudentPassword(userId, hashedPassword);
+  } else if (role === "PROFESSOR") {
+    await updateProfessorPassword(userId, hashedPassword);
+  } else {
+    throw new ApiError(400, "Invalid role");
+  }
+
+  // 4. mark OTP as used (single-use guarantee)
+  await markOtpUsed(otpId);
+
+  return true;
+};

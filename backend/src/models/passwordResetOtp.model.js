@@ -22,20 +22,14 @@ export const createPasswordResetOtp = async ({
   );
 };
 
-export const findValidOtp = async ({userId, userType}) => {
-  if (!userId || !userType) {
-    throw new Error("userId and userType are required");
-  }
+export const findValidOtpByOtp = async () => {
   const [rows] = await pool.query(
     `SELECT *
         FROM password_reset_otp
-        WHERE user_id = ?
-            AND user_type = ?
-            AND used = FALSE
-            AND expires_at > NOW()
+        WHERE used = FALSE
+          AND expires_at > NOW()
         ORDER BY created_at DESC
-        LIMIT 1`,
-    [userId, userType],
+        LIMIT 1`
   );
   return rows[0] || null;
 };

@@ -2,13 +2,10 @@ import jwt from "jsonwebtoken"
 import ApiError from "../utils/ApiError.js"
 
 export const requireAuth = (req, _res, next) => {
-    const authHeader = req.header("Authorization") || req.header("authorization")
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        throw new ApiError(401, "Authorization token missing")
+    const token = req.cookies?.accessToken;
+    if (!token) {
+        throw new ApiError(401, "Authentication required");
     }
-
-    const token = authHeader.split(" ")[1]
 
     try {
         const decoded = jwt.verify(
@@ -22,7 +19,7 @@ export const requireAuth = (req, _res, next) => {
         }
 
         next()
-    } catch (error) {
+    } catch {
         throw new ApiError(401, "Invalid or expired access token")
     }
 }

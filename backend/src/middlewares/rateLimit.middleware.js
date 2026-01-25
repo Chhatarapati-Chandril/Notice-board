@@ -8,14 +8,14 @@ const passwordRateLimitKey = (req) => {
     req.body?.email ||
     "unknown";
 
-  // ✅ IPv6-safe IP handling
+  // IPv6-safe IP handling
   return `${ipKeyGenerator(req)}:${identifier}`;
 };
 
 // Forgot password (OTP send)
 export const forgotPasswordLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 15,
+  limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   keyGenerator: passwordRateLimitKey,
@@ -30,7 +30,7 @@ export const forgotPasswordLimit = rateLimit({
 // Reset password (OTP verify)
 export const changePasswordLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   keyGenerator: passwordRateLimitKey,

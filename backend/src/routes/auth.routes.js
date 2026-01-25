@@ -7,28 +7,40 @@ import {
     professorLogin, 
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyOtp,
+    refreshAccessToken
 } from '../controllers/auth.controller.js';
 
 const router = Router()
 
-// AUTH
+// LOGIN
 router.route("/student/login")
     .post(studentLogin);
 
 router.route("/professor/login")
     .post(professorLogin);
 
+
 // PASSWORD RESET
 router.route("/forgot-password")
     .post(forgotPasswordLimit, forgotPassword);
 
+router.route("/verify-otp")
+    .post(changePasswordLimit, verifyOtp)
+
 router.route("/reset-password")
-    .post(changePasswordLimit, resetPassword);
+    .patch(changePasswordLimit, resetPassword);
+
+
+// TOKEN
+router.route("/refresh-token")
+    .post(refreshAccessToken)
+
 
 // LOGOUT
 router.route("/logout")
-    .post(requireAuth, logout);
+    .post(logout);
 
 
 export default router

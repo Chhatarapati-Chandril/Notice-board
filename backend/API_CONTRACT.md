@@ -74,12 +74,12 @@ All API responses follow this format:
 ### Logout
 
 **POST** `/auth/logout`
-
+<!-- 
 **Headers:**
 
 ```
 Authorization: Bearer <accessToken>
-```
+``` -->
 
 **Response:**
 
