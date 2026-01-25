@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import AppBox from "../components/AppBox";
+import ProfileMenu from "../components/ProfileMenu";
 import FloatingButton from "../components/FloatingButton";
 
 function Home() {
@@ -36,18 +37,25 @@ function Home() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-8 relative">
-        {/* Apps cards (Notice Board etc.) */}
-        {showApps && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AppBox title="Notice Board" onClick={handleNoticeClick} />
-            {/* You can add more apps here in future */}
-          </div>
-        )}
+     {/* Main content */}
+<div className="flex-1 p-8 relative">
 
-        {/* Professor + button */}
-        {role === "professor" && <FloatingButton onClick={handlePostClick} />}
-      </div>
+  {/* 🔵 Top Right Profile Menu */}
+  <div className="absolute top-6 right-8 z-50">
+    <ProfileMenu />
+  </div>
+
+  {/* Apps cards */}
+  {showApps && (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
+      <AppBox title="Notice Board" onClick={handleNoticeClick} />
+    </div>
+  )}
+
+  {/* Professor floating button */}
+  {role === "professor" && <FloatingButton onClick={handlePostClick} />}
+</div>
+
     </div>
   );
 }
