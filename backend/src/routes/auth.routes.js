@@ -34,7 +34,7 @@ router.route("/reset-password")
 
 
 // TOKEN
-router.route("/refresh-token")
+router.route("/refresh")
     .post(refreshAccessToken)
 
 
