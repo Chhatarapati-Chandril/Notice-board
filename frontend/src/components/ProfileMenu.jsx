@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../redux/axios";
+import axios from "axios";
 import { logout } from "../redux/authslice";
 
 export default function ProfileMenu() {
@@ -28,6 +29,10 @@ export default function ProfileMenu() {
       console.error("Logout error", err);
     } finally {
       // Always clear frontend state
+      await axios.post("/auth/logout", {}, { withCredentials: true });
+    } catch (err) {
+      console.error("Logout error", err);
+    } finally {
       dispatch(logout());
       navigate("/login");
     }
@@ -40,6 +45,7 @@ export default function ProfileMenu() {
         onClick={() => setOpen(!open)}
         className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold cursor-pointer hover:scale-105 transition"
       >
+        {/* Random DP letter */}
         U
       </div>
 
@@ -52,6 +58,7 @@ export default function ProfileMenu() {
               setOpen(false);
             }}
             className="w-full text-left px-4 py-2 text-gray-200 hover:bg-gray-600 transition cursor-pointer"
+            className="w-full text-left px-4 py-2 text-gray-200 hover:bg-gray-600 transition"
           >
             Home
           </button>
@@ -59,6 +66,7 @@ export default function ProfileMenu() {
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
           >
             Logout
           </button>
