@@ -20,6 +20,22 @@ export default function Login() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
+  // 🔴 CLIENT-SIDE VALIDATION
+  if (role === "student") {
+    if (!rollNo.trim() || !password.trim()) {
+      alert("❌ Please enter Roll Number and Password");
+      return;
+    }
+  }
+
+  if (role === "professor") {
+    if (!email.trim() || !password.trim()) {
+      alert("❌ Please enter Email and Password");
+      return;
+    }
+  }
+
   dispatch(authStart());
 
   try {
@@ -46,13 +62,16 @@ const handleSubmit = async (e) => {
 
     navigate("/home");
   } catch (err) {
-    dispatch(
-      authFailure(
-        err.response?.data?.message || "Login failed"
-      )
-    );
+    const errorMessage =
+      err.response?.data?.message || "❌ Invalid credentials";
+
+    dispatch(authFailure(errorMessage));
+
+    // 🔴 SHOW ALERT ON WRONG DATA
+    alert(errorMessage);
   }
 };
+
 
 
   return (
