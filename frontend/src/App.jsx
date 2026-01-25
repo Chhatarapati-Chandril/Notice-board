@@ -15,8 +15,12 @@ function App() {
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
 
   useEffect(() => {
+  if (!isAuthenticated) {
     dispatch(restoreSession());
-  }, []);
+  }
+}, [dispatch, isAuthenticated]);
+
+
 
   if (loading) return <div>Checking session...</div>;
 
