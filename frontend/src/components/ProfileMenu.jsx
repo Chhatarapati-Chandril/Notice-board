@@ -51,14 +51,14 @@ export default function ProfileMenu() {
               navigate("/home");
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2 text-gray-200 hover:bg-gray-600 transition"
+            className="w-full text-left px-4 py-2 text-gray-200 hover:bg-gray-600 transition cursor-pointer"
           >
             Home
           </button>
 
           <button
             onClick={handleLogout}
-            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
+            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 transition cursor-pointer"
           >
             Logout
           </button>
