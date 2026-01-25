@@ -6,7 +6,7 @@ import AppBox from "../components/AppBox";
 import FloatingButton from "../components/FloatingButton";
 
 function Home() {
-  const role = "professor" // "student" or "professor"
+  const role = useSelector((state) => state.auth.role); // "student" or "professor"
   const navigate = useNavigate();
 
   // State for toggling apps
@@ -23,7 +23,7 @@ function Home() {
   return (
     <div className="flex h-screen bg-[#46494A]">
       {/* Sidebar */}
-      <div className="w-64 bg-[#2d2f30] text-white p-5 flex flex-col">
+      <div className="w-64 bg-[#6a767b] text-white p-5 flex flex-col">
         <h2 className="text-2xl font-bold mb-6">My Portal</h2>
 
         {/* Apps button (always visible) */}

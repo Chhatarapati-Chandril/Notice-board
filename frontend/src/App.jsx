@@ -8,7 +8,7 @@ import NoticeBoard from "./pages/NoticeBoard";
 import PostNotice from "./pages/PostNotice";
 
 function App() {
-  const isLoggedIn = true;
+  const isLoggedIn = useSelector((state) => state.auth.isAuthenticated);
 
   return (
     <Routes>
