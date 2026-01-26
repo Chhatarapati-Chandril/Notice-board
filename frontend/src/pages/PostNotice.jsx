@@ -6,14 +6,14 @@ import { useNavigate } from "react-router-dom";
 
 function PostNotice() {
   const dispatch = useDispatch();
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     title: "",
     department: "",
     content: "",
-    date: "",
     file: null,
+    visibility: "Public", // 🔹 default visibility
   });
 
   const handleChange = (e) => {
@@ -21,26 +21,29 @@ const navigate = useNavigate();
   };
 
   const handleSubmit = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!form.title || !form.department || !form.content) {
-    alert("Please fill all required fields");
-    return;
-  }
+    if (!form.title || !form.department || !form.content) {
+      alert("Please fill all required fields");
+      return;
+    }
 
-  dispatch(
-    addNotice({
-      from: form.department,
-      notice: form.title,
-      content: form.content,
-      date: form.date || "Today",
-    })
-  );
+    // 🔹 Automatically set today's date
+    const today = new Date().toISOString().split("T")[0];
 
-  // ✅ Redirect to NoticeBoard
-  navigate("/noticeboard");
-};
+    dispatch(
+      addNotice({
+        from: form.department,
+        notice: form.title,
+        content: form.content,
+        date: today,
+        visibility: form.visibility,
+      })
+    );
 
+    // ✅ Redirect to NoticeBoard
+    navigate("/noticeboard");
+  };
 
   return (
     <>
@@ -65,14 +68,6 @@ const navigate = useNavigate();
                 onChange={handleChange}
               />
 
-              {/* DATE */}
-              <input
-                type="date"
-                name="date"
-                className="w-full border px-4 py-2 rounded-md"
-                onChange={handleChange}
-              />
-
               {/* DEPARTMENT */}
               <select
                 name="department"
@@ -86,8 +81,8 @@ const navigate = useNavigate();
                 <option>Technical Society</option>
                 <option>Sports Club</option>
                 <option>Student Council</option>
-                 <option>NSS</option>
-                 <option>General</option>
+                <option>NSS</option>
+                <option>General</option>
               </select>
 
               {/* CONTENT */}
@@ -107,6 +102,33 @@ const navigate = useNavigate();
                   setForm({ ...form, file: e.target.files[0] })
                 }
               />
+
+              {/* VISIBILITY */}
+              <div className="flex items-center gap-6">
+                <span className="font-medium text-gray-700">Visibility:</span>
+                
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="Public"
+                    checked={form.visibility === "Public"}
+                    onChange={handleChange}
+                  />
+                  Public
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="Private"
+                    checked={form.visibility === "Private"}
+                    onChange={handleChange}
+                  />
+                  Private
+                </label>
+              </div>
 
               {/* SUBMIT */}
               <button
