@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary"
 import fs from "fs/promises"
-import { devError, devLog } from "./logger"
+import { devError, devLog } from "./logger.js"
 
 cloudinary.config(
     {
@@ -10,7 +10,7 @@ cloudinary.config(
     }
 )
 
-const uploadOnCloudinary = async (localFilePath) => {
+export const uploadOnCloudinary = async (localFilePath) => {
 
     if(!localFilePath)  return null
 
@@ -22,7 +22,13 @@ const uploadOnCloudinary = async (localFilePath) => {
         devLog("file is uploaded on cloudinary", response.public_id)
         devLog(response);
         
-        return response
+        return {
+            url: response.secure_url,
+            publicId: response.public_id,
+            format: response.format,
+            bytes: response.bytes,
+            resourceType: response.resource_type
+        };
     } catch (error) {
         devError("Cloudinary upload failed:", error.message)
         return null
@@ -35,5 +41,3 @@ const uploadOnCloudinary = async (localFilePath) => {
         }        
     }
 }
-
-export default uploadOnCloudinary

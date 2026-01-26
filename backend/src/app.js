@@ -18,7 +18,11 @@ app.use(cookieParser())
 
 // routes import
 import authRoutes from "./routes/auth.routes.js"
+import noticeRoutes from "./routes/notice.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
+app.use("/api/v1/noticeboard/notices", noticeRoutes);
+app.use("/api/v1/noticeboard/categories", categoryRoutes);
 app.use("/api/v1/auth", authRoutes)
 
 export default app

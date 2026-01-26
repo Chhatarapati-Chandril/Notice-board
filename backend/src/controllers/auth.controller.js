@@ -53,8 +53,10 @@ export const studentLogin = asyncHandler(async (req, res) => {
     role: "STUDENT",
   });
 
-  // 5. set refresh token cookie
+  // 5. set refresh and access token cookie
+  res.cookie("accessToken", accessToken, cookieOptions);
   res.cookie("refreshToken", refreshToken, cookieOptions);
+
 
   // 6. normal login success
   return res.status(200).json(
@@ -101,7 +103,8 @@ export const professorLogin = asyncHandler(async (req, res) => {
     role: "PROFESSOR",
   });
 
-  // 5. set refresh token cookie
+  // 5. set refresh ad access token cookie
+  res.cookie("accessToken", accessToken, cookieOptions);
   res.cookie("refreshToken", refreshToken, cookieOptions);
 
   // 6. normal login success
