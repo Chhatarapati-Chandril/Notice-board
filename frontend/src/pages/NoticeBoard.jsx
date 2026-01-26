@@ -84,7 +84,7 @@ function NoticeBoard() {
               <table className="w-full border border-gray-300 text-sm rounded-md overflow-hidden">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="border px-4 py-3 text-center">Bookmark</th>
+                    <th className="border px-4 py-3 text-center w-6">Bookmark</th>
                     <th className="border px-4 py-3 text-left">From</th>
                     <th className="border px-4 py-3 text-left">Notice</th>
                     <th className="border px-4 py-3 text-center">Date</th>

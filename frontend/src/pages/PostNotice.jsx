@@ -20,30 +20,31 @@ function PostNotice() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
 
-    if (!form.title || !form.department || !form.content) {
-      alert("Please fill all required fields");
-      return;
-    }
+  if (!form.title || !form.department || !form.content) {
+    alert("Please fill all required fields");
+    return;
+  }
 
-    // 🔹 Automatically set today's date
-    const today = new Date().toISOString().split("T")[0];
+  // 🔹 Automatically set today's date
+  const today = new Date().toISOString().split("T")[0];
 
-    dispatch(
-      addNotice({
-        from: form.department,
-        notice: form.title,
-        content: form.content,
-        date: today,
-        visibility: form.visibility,
-      })
-    );
+  dispatch(
+    addNotice({
+      from: form.department,
+      notice: form.title,
+      content: form.content,
+      date: today,
+      visibility: form.visibility,
+    })
+  );
 
-    // ✅ Redirect to NoticeBoard
-    navigate("/noticeboard");
-  };
+  // ✅ Navigate to NoticeBoard and replace history so "back" doesn't go to PostNotice
+  navigate("/noticeboard", { replace: true });
+};
+
 
   return (
     <>
