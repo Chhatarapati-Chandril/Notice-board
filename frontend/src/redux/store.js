@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authslice";
+import noticeReducer from "./noticeSlice";
 import { injectStore } from "./axios";
 
 export const store = configureStore({
   reducer: {
-    auth: authReducer,
+     auth: authReducer,
+    notices: noticeReducer,
   },
 });
 

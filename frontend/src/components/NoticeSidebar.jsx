@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import {
   FaBell,
-  FaStar,
+  FaBookmark,
   FaUsers,
   FaBuilding,
   FaLayerGroup,
@@ -17,7 +17,7 @@ function NoticeSidebar({ selected, setSelected }) {
   });
 
   return (
-    <div className="w-64 bg-[#6a767b] text-white p-5 flex flex-col justify-between">
+    <div className="w-64 bg-[#6a767b] text-white p-5 flex flex-col justify-between h-full">
       {/* TOP */}
       <div>
         <h2 className="text-2xl font-bold mb-6">Notices</h2>
@@ -25,13 +25,6 @@ function NoticeSidebar({ selected, setSelected }) {
         <SidebarItem
           icon={<FaBell />}
           name="All Notices"
-          selected={selected}
-          setSelected={setSelected}
-        />
-
-        <SidebarItem
-          icon={<FaStar />}
-          name="Important Notices"
           selected={selected}
           setSelected={setSelected}
         />
@@ -88,7 +81,7 @@ function NoticeSidebar({ selected, setSelected }) {
         />
 
         <SidebarItem
-          icon={<FaStar />}
+          icon={<FaBookmark className="text-blue-400" />}
           name="Bookmarks"
           selected={selected}
           setSelected={setSelected}
@@ -134,17 +127,13 @@ function Dropdown({ title, icon, open, toggle, children }) {
           {title}
         </div>
         <FaChevronDown
-          className={`transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
           size={12}
         />
       </div>
 
       {open && (
-        <div className="ml-6 mt-1 space-y-1 text-sm text-gray-200">
-          {children}
-        </div>
+        <div className="ml-6 mt-1 space-y-1 text-sm text-gray-200">{children}</div>
       )}
     </div>
   );
