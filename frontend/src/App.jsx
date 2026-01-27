@@ -2,9 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 
-import { restoreSession } from "./redux/authapi";
+import { loginSuccess, authChecked } from "./redux/authslice";
 
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import NoticeBoard from "./pages/NoticeBoard";
@@ -12,14 +12,22 @@ import PostNotice from "./pages/PostNotice";
 
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, loading, role } = useSelector(
+    (state) => state.auth
+  );
 
-  // ✅ Restore session ONCE on app load
+  // ✅ Restore session from localStorage (STUDENT / PROFESSOR / GUEST)
   useEffect(() => {
-    dispatch(restoreSession());
+    const storedAuth = localStorage.getItem("auth");
+
+    if (storedAuth) {
+      dispatch(loginSuccess(JSON.parse(storedAuth)));
+    } else {
+      dispatch(authChecked());
+    }
   }, [dispatch]);
 
-  // ⏳ Block routing until auth is resolved
+  // ⏳ Wait until auth is resolved
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center text-lg">
@@ -40,7 +48,7 @@ function App() {
         }
       />
 
-      {/* AUTH */}
+      {/* LOGIN */}
       <Route
         path="/login"
         element={
@@ -49,9 +57,10 @@ function App() {
             : <Login />
         }
       />
+
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* APP */}
+      {/* HOME (STUDENT / PROFESSOR / GUEST) */}
       <Route
         path="/home/*"
         element={
@@ -61,21 +70,24 @@ function App() {
         }
       />
 
+      {/* NOTICE BOARD (READ-ONLY FOR GUEST) */}
       <Route
         path="/noticeboard/*"
         element={
-          isAuthenticated
+          role === "STUDENT" || role === "PROFESSOR" || role === "GUEST"
             ? <NoticeBoard />
             : <Navigate to="/login" replace />
         }
       />
 
+
+      {/* POST NOTICE (ONLY PROFESSOR) */}
       <Route
         path="/post-notice"
         element={
-          isAuthenticated
+          isAuthenticated && role === "PROFESSOR"
             ? <PostNotice />
-            : <Navigate to="/login" replace />
+            : <Navigate to="/home" replace />
         }
       />
 

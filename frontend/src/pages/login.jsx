@@ -69,6 +69,16 @@ export default function Login() {
     }
   };
 
+  const handleGuestLogin = () => {
+  localStorage.setItem(
+    "auth",
+    JSON.stringify({ role: "GUEST" })
+  );
+
+  navigate("/home");
+};
+
+
   return (
     <div className="min-h-screen bg-[#2f343a] relative overflow-hidden">
       <Nav />
@@ -170,6 +180,14 @@ export default function Login() {
               className="w-full bg-gray-300 text-gray-900 font-semibold py-2 rounded-md cursor-pointer"
             >
               Log in
+            </button>
+
+            <button
+              type="button"
+              className="w-full border border-gray-400 text-gray-300 py-2 cursor-pointer rounded-md hover:bg-gray-700/40 transition"
+            onClick={handleGuestLogin} >
+              View as Guest
+              
             </button>
 
             <div className="text-right">

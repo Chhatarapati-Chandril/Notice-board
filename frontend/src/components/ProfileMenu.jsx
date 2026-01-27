@@ -11,7 +11,6 @@ export default function ProfileMenu() {
   const navigate = useNavigate();
 
   const { role, userIdentifier } = useSelector((state) => state.auth);
-  console.log(role, userIdentifier);
 
   useEffect(() => {
     const handler = (e) => {
@@ -25,10 +24,15 @@ export default function ProfileMenu() {
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout");
+      // 🔥 Call backend logout ONLY for real users
+      if (role !== "GUEST") {
+        await api.post("/auth/logout");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Logout error:", err);
     } finally {
+      // 🔥 Clear persistence + redux
+      localStorage.removeItem("auth");
       dispatch(logout());
       navigate("/login");
     }
@@ -36,11 +40,12 @@ export default function ProfileMenu() {
 
   return (
     <div className="relative" ref={menuRef}>
+      {/* Avatar */}
       <div
         onClick={() => setOpen(!open)}
         className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold cursor-pointer"
       >
-        {(role === "STUDENT") ? "S" : "P"}
+        {role === "STUDENT" ? "S" : role === "PROFESSOR" ? "P" : "G"}
       </div>
 
       {open && (
@@ -49,13 +54,19 @@ export default function ProfileMenu() {
           {/* USER INFO */}
           <div className="px-4 py-3 border-b border-gray-600">
             <p className="text-xs text-gray-400">
-              {role === "STUDENT" ? "Student Roll No" : "Professor Email"}
+              {role === "STUDENT"
+                ? "Student Roll No"
+                : role === "PROFESSOR"
+                ? "Professor Email"
+                : "Guest User"}
             </p>
+
             <p className="text-sm font-semibold text-gray-200 break-all">
-              {userIdentifier}
+              {userIdentifier || "Read-only access"}
             </p>
           </div>
 
+          {/* HOME */}
           <button
             onClick={() => {
               navigate("/home");
@@ -66,6 +77,7 @@ export default function ProfileMenu() {
             Home
           </button>
 
+          {/* LOGOUT */}
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10"

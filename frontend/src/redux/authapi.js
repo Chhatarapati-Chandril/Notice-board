@@ -2,16 +2,15 @@ import api from "./api.js";
 import { loginSuccess, authChecked } from "./authslice.js";
 
 export const restoreSession = () => async (dispatch) => {
-  try {
-    const savedAuth = JSON.parse(localStorage.getItem("auth"));
+  const savedAuth = JSON.parse(localStorage.getItem("auth"));
 
-    if (!savedAuth?.token) throw new Error("No session");
-
+  if (savedAuth) {
     dispatch(loginSuccess(savedAuth));
-  } catch {
+  } else {
     dispatch(authChecked());
   }
 };
+
 
 // Student login
 export const studentLogin = (payload) =>
