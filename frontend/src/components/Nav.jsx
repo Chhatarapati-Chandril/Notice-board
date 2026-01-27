@@ -22,7 +22,7 @@ export default function Nav() {
 
             <div className="flex flex-col leading-tight">
               <h1 className="text-red-500 text-xl font-serif tracking-wide">
-                Our Website
+                Our Portal
               </h1>
               <span className="text-gray-400 text-sm font-sans">
                 One true intranet portal of IITSNP
