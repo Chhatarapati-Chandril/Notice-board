@@ -13,7 +13,7 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [role, setRole] = useState("student");
+  const [role, setRole] = useState("STUDENT");
 
   const [rollNo, setRollNo] = useState("");
   const [email, setEmail] = useState("");
@@ -24,12 +24,12 @@ export default function Login() {
     e.preventDefault();
 
     // ✅ CLIENT-SIDE VALIDATION
-    if (role === "student" && (!rollNo.trim() || !password.trim())) {
+    if (role === "STUDENT" && (!rollNo.trim() || !password.trim())) {
       alert("❌ Please enter Roll Number and Password");
       return;
     }
 
-    if (role === "professor" && (!email.trim() || !password.trim())) {
+    if (role === "PROFESSOR" && (!email.trim() || !password.trim())) {
       alert("❌ Please enter Email and Password");
       return;
     }
@@ -37,7 +37,7 @@ export default function Login() {
     try {
       let res;
 
-      if (role === "student") {
+      if (role === "STUDENT") {
         res = await studentLogin({
           roll_no: rollNo,
           password,
@@ -53,7 +53,7 @@ export default function Login() {
       dispatch(
         loginSuccess({
           token: res.data.data.accessToken,
-          role: role === "student" ? "STUDENT" : "PROFESSOR",
+          role: role === "STUDENT" ? "STUDENT" : "PROFESSOR",
         })
       );
 
@@ -86,15 +86,15 @@ export default function Login() {
             <label
               className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer border transition
               ${
-                role === "student"
+                role === "STUDENT"
                   ? "border-blue-500 bg-blue-500/10"
                   : "border-gray-500/40 hover:border-gray-400"
               }`}
             >
               <input
                 type="radio"
-                checked={role === "student"}
-                onChange={() => setRole("student")}
+                checked={role === "STUDENT"}
+                onChange={() => setRole("STUDENT")}
                 className="w-5 h-5 accent-blue-500"
               />
               <span>Student</span>
@@ -103,15 +103,15 @@ export default function Login() {
             <label
               className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer border transition
               ${
-                role === "professor"
+                role === "PROFESSOR"
                   ? "border-blue-500 bg-blue-500/10"
                   : "border-gray-500/40 hover:border-gray-400"
               }`}
             >
               <input
                 type="radio"
-                checked={role === "professor"}
-                onChange={() => setRole("professor")}
+                checked={role === "PROFESSOR"}
+                onChange={() => setRole("PROFESSOR")}
                 className="w-5 h-5 accent-blue-500"
               />
               <span>Professor</span>
@@ -120,7 +120,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Student */}
-            {role === "student" && (
+            {role === "STUDENT" && (
               <div>
                 <label className="text-sm">Roll No</label>
                 <input
@@ -133,7 +133,7 @@ export default function Login() {
             )}
 
             {/* Professor */}
-            {role === "professor" && (
+            {role === "PROFESSOR" && (
               <div>
                 <label className="text-sm">Email</label>
                 <input

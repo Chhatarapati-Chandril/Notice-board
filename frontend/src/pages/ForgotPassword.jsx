@@ -11,7 +11,7 @@ export default function ForgotPassword() {
 
   const [step, setStep] = useState(1);
 
-  const [role, setRole] = useState("student"); // student | professor
+  const [role, setRole] = useState("STUDENT"); // student | professor
   const [username, setUsername] = useState(""); // roll_no | email
   const [otp, setOtp] = useState("");
   const [resetToken, setResetToken] = useState(null);
@@ -29,7 +29,7 @@ export default function ForgotPassword() {
     e.preventDefault();
 
     try {
-      if (role === "student") {
+      if (role === "STUDENT") {
         await forgotPassword({
           role: "STUDENT",
           roll_no: username,
@@ -108,21 +108,21 @@ export default function ForgotPassword() {
             <form onSubmit={handleStep1} className="space-y-4">
 
               <div className="flex justify-center gap-4">
-                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "student" ? "border-blue-500" : "border-gray-500"}`}>
+                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "STUDENT" ? "border-blue-500" : "border-gray-500"}`}>
                   <input
                     type="radio"
-                    checked={role === "student"}
-                    onChange={() => { setRole("student"); setUsername(""); }}
+                    checked={role === "STUDENT"}
+                    onChange={() => { setRole("STUDENT"); setUsername(""); }}
                     className="mr-2"
                   />
                   Student
                 </label>
 
-                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "professor" ? "border-blue-500" : "border-gray-500"}`}>
+                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "PROFESSOR" ? "border-blue-500" : "border-gray-500"}`}>
                   <input
                     type="radio"
-                    checked={role === "professor"}
-                    onChange={() => { setRole("professor"); setUsername(""); }}
+                    checked={role === "PROFESSOR"}
+                    onChange={() => { setRole("PROFESSOR"); setUsername(""); }}
                     className="mr-2"
                   />
                   Professor
@@ -131,10 +131,10 @@ export default function ForgotPassword() {
 
               <div>
                 <label className="text-sm">
-                  {role === "student" ? "Roll No" : "Email"}
+                  {role === "STUDENT" ? "Roll No" : "Email"}
                 </label>
                 <input
-                  type={role === "student" ? "text" : "email"}
+                  type={role === "STUDENT" ? "text" : "email"}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full mt-1 px-3 py-2 bg-[#4a5057] rounded-md"

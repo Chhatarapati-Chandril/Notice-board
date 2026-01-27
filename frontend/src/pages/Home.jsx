@@ -84,7 +84,7 @@ function Home() {
     />
   </div>
 
-  {role === "professor" && (
+  {role === "PROFESSOR" && (
     <FloatingButton onClick={handlePostClick} />
   )}
 </div>
