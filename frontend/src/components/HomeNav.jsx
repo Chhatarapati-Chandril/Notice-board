@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import ProfileMenu from "./ProfileMenu";
 
@@ -8,7 +9,7 @@ export default function HomeNav({ title = "Our Portal", subtitle }) {
       <div className="flex justify-between items-center h-20 px-4">
 
         {/* LEFT: Logo + Dynamic Title */}
-        <div className="flex items-center">
+        <Link to="/home" className="flex items-center cursor-pointer">
           <img
             className="h-12 w-12 object-contain"
             src={logo}
@@ -30,7 +31,7 @@ export default function HomeNav({ title = "Our Portal", subtitle }) {
               )}
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* RIGHT */}
         <ProfileMenu />

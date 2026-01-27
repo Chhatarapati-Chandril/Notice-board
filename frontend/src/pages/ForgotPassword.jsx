@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Nav from "../components/Nav";
 import FootNav from "../components/FootNav";
-import api from "../redux/axios";
+import api from "../redux/api";
 import { forgotPassword, resetPassword } from "../redux/authapi";
 
 export default function ForgotPassword() {
@@ -94,7 +94,6 @@ export default function ForgotPassword() {
 
       <div className="flex items-center justify-center min-h-screen pt-20 px-4">
         <div className="bg-[#3a3f45] w-full max-w-sm rounded-xl shadow-2xl p-6 text-gray-200 z-10">
-
           <h2 className="text-xl font-semibold text-center mb-4">
             Forgot Password
           </h2>
@@ -106,23 +105,32 @@ export default function ForgotPassword() {
           {/* STEP 1 */}
           {step === 1 && (
             <form onSubmit={handleStep1} className="space-y-4">
-
               <div className="flex justify-center gap-4">
-                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "STUDENT" ? "border-blue-500" : "border-gray-500"}`}>
+                <label
+                  className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "STUDENT" ? "border-blue-500" : "border-gray-500"}`}
+                >
                   <input
                     type="radio"
                     checked={role === "STUDENT"}
-                    onChange={() => { setRole("STUDENT"); setUsername(""); }}
+                    onChange={() => {
+                      setRole("STUDENT");
+                      setUsername("");
+                    }}
                     className="mr-2"
                   />
                   Student
                 </label>
 
-                <label className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "PROFESSOR" ? "border-blue-500" : "border-gray-500"}`}>
+                <label
+                  className={`px-4 py-2 rounded-lg border cursor-pointer ${role === "PROFESSOR" ? "border-blue-500" : "border-gray-500"}`}
+                >
                   <input
                     type="radio"
                     checked={role === "PROFESSOR"}
-                    onChange={() => { setRole("PROFESSOR"); setUsername(""); }}
+                    onChange={() => {
+                      setRole("PROFESSOR");
+                      setUsername("");
+                    }}
                     className="mr-2"
                   />
                   Professor
@@ -171,7 +179,6 @@ export default function ForgotPassword() {
           {/* STEP 3 */}
           {step === 3 && (
             <form onSubmit={handleStep3} className="space-y-4">
-
               <div className="relative">
                 <label className="text-sm">New Password</label>
                 <input
@@ -211,7 +218,6 @@ export default function ForgotPassword() {
               </button>
             </form>
           )}
-
         </div>
       </div>
 

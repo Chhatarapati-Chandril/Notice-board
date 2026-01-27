@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authslice";
 import noticeReducer from "./noticeSlice";
-import { injectStore } from "./axios";
+import { injectStore } from "./api";
 
 export const store = configureStore({
   reducer: {

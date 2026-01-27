@@ -2,14 +2,14 @@ import axios from "axios";
 
 let reduxStore;
 
-// Inject redux store
+// Inject redux store (called once during app init)
 export const injectStore = (store) => {
   reduxStore = store;
 };
 
 const api = axios.create({
-  baseURL: "/api/v1",          // ✅ RELATIVE
-  withCredentials: true,       // ✅ REQUIRED
+  baseURL: "/api/v1",          // ✅ Backend prefix
+  withCredentials: true,       // ✅ Cookies (refresh token)
   headers: {
     "Content-Type": "application/json",
   },
@@ -26,7 +26,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  Promise.reject
+  (error) => Promise.reject(error)
 );
 
 // =======================
@@ -35,18 +35,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (!error.response || !reduxStore) {
+      return Promise.reject(error);
+    }
+
     const originalRequest = error.config;
 
-    if (!error.response) {
-      return Promise.reject(error);
-    }
-
-    // 🚫 Never retry refresh endpoint
+    // 🚫 Never retry refresh itself
     if (originalRequest.url?.includes("/auth/refresh")) {
-      reduxStore?.dispatch({ type: "auth/logout" });
+      reduxStore.dispatch({ type: "auth/logout" });
       return Promise.reject(error);
     }
 
+    // 🔁 Access token expired
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -62,8 +63,9 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
 
-      } catch {
-        reduxStore?.dispatch({ type: "auth/logout" });
+      } catch (refreshError) {
+        reduxStore.dispatch({ type: "auth/logout" });
+        return Promise.reject(refreshError);
       }
     }
 

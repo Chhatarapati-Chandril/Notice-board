@@ -16,7 +16,7 @@ function FloatingButton({ onClick }) {
         flex items-center justify-center
         hover:scale-110 hover:shadow-2xl
         transition-transform duration-300
-        focus:outline-none
+        focus:outline-none cursor-pointer
       "
       title="Post Notice"
     >

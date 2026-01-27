@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import api from "../redux/axios";
+import api from "../redux/api";
 import { logout } from "../redux/authslice";
 
 export default function ProfileMenu() {

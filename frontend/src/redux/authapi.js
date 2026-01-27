@@ -1,12 +1,14 @@
-import api from "./axios";
-import { loginSuccess, logout } from "./authslice";
+import api from "./api.js";
+import { loginSuccess, authChecked } from "./authslice.js";
 
 export const restoreSession = () => async (dispatch) => {
   try {
     const res = await api.post("/auth/refresh");
-    dispatch(loginSuccess(res.data.data));
+    const { accessToken, role } = res.data.data;
+
+    dispatch(loginSuccess({ token: accessToken, role }));
   } catch {
-    dispatch(logout());
+    dispatch(authChecked()); // 👈 tells app “auth check done”
   }
 };
 // Student login
