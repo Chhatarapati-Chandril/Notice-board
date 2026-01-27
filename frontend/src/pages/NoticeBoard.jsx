@@ -319,9 +319,32 @@ function NoticeBoard() {
               <span>{formatDate(selectedNotice.created_at)}</span>
             </div>
 
-            <div className="text-gray-700 leading-relaxed max-h-80 overflow-y-auto">
-              {selectedNotice.content}
-            </div>
+           <div className="text-gray-700 leading-relaxed max-h-80 overflow-y-auto">
+  {selectedNotice.content}
+
+  {selectedNotice.files?.length > 0 && (
+    <div className="mt-4">
+      <h3 className="text-sm font-semibold text-gray-600 mb-2">
+        Attachments
+      </h3>
+
+      <ul className="space-y-1">
+        {selectedNotice.files.map((file, idx) => (
+          <li key={idx}>
+            <a
+              href={file.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline text-sm"
+            >
+              {file.original_name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</div>
           </div>
         </div>
       )}

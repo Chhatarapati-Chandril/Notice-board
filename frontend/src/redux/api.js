@@ -8,11 +8,9 @@ export const injectStore = (store) => {
 };
 
 const api = axios.create({
-  baseURL: "/api/v1",          // ✅ Backend prefix
-  withCredentials: true,       // ✅ Cookies (refresh token)
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: "/api/v1",     // ✅ Backend prefix
+  withCredentials: true,  // ✅ Cookies (refresh token)
+  // ❌ REMOVE global Content-Type
 });
 
 // =======================
@@ -21,9 +19,20 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = reduxStore?.getState()?.auth?.token;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // 🔥 CRITICAL FIX
+    // Only set JSON header if NOT FormData
+    if (!(config.data instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
+    } else {
+      // Let browser set multipart/form-data + boundary
+      delete config.headers["Content-Type"];
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
