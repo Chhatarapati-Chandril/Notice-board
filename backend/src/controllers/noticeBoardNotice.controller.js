@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 
 import { createAttachments } from "../models/noticeBoardAttachment.model.js";
+import { devLog } from "../utils/logger.js";
 
 export const getNotices = asyncHandler(async (req, res) => {
   const isAuthenticated = Boolean(req.user);
@@ -121,11 +122,27 @@ export const getNoticeById = asyncHandler(async (req, res) => {
 
 
 export const createNotice = asyncHandler(async (req, res) => {
+
+  devLog("USER:", req.user);
+  devLog("BODY:", req.body);
+  devLog("FILES:", req.files);
+
   const { title, content, categoryId, is_public = true } = req.body;
 
   if (!title || !categoryId) {
     throw new ApiError(400, "Title and category are required");
   }
+
+  const parsedCategoryId = Number(categoryId);
+  if (Number.isNaN(parsedCategoryId)) {
+    throw new ApiError(400, "Invalid category");
+  }
+
+  const isPublic =
+    is_public === true ||
+    is_public === "true" ||
+    is_public === 1 ||
+    is_public === "1";
 
   const [result] = await pool.query(
     `
@@ -133,7 +150,12 @@ export const createNotice = asyncHandler(async (req, res) => {
     (title, content, notice_category_id, is_public, posted_by)
     VALUES (?, ?, ?, ?, ?)
     `,
-    [title, content || null, categoryId, is_public, req.user.id]
+    [
+      title, 
+      content || null, 
+      parsedCategoryId, 
+      isPublic ? 1 : 0, 
+      req.user.id]
   );
 
   await createAttachments(result.insertId, req.files || []);
