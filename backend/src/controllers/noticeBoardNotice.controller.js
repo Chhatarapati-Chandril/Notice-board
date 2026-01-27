@@ -13,7 +13,7 @@ export const getNotices = asyncHandler(async (req, res) => {
   const limit = Number(req.query.limit) || 10;
   const offset = (page - 1) * limit;
 
-  const { search, categoryId, from, to } = req.query;
+  const { search, categoryId, from, to, date } = req.query;
 
   let where = `
     WHERE n.is_deleted = FALSE
@@ -31,15 +31,26 @@ export const getNotices = asyncHandler(async (req, res) => {
     params.push(categoryId);
   }
 
-  if (from) {
-    where += " AND n.created_at >= ?";
-    params.push(from);
+  if (date) {
+    // frontend sends: ?date=YYYY-MM-DD
+    const startOfDay = `${date} 00:00:00`;
+    const endOfDay = `${date} 23:59:59`;
+
+    where += " AND n.created_at BETWEEN ? AND ?";
+    params.push(startOfDay, endOfDay);
+  } else {
+    // fallback: explicit range (useful for future filters)
+    if (from) {
+      where += " AND n.created_at >= ?";
+      params.push(from);
+    }
+
+    if (to) {
+      where += " AND n.created_at <= ?";
+      params.push(to);
+    }
   }
 
-  if (to) {
-    where += " AND n.created_at <= ?";
-    params.push(to);
-  }
 
   const [rows] = await pool.query(
     `
