@@ -20,7 +20,7 @@ export default function HomeNav({ title = "Our Portal", subtitle }) {
             <div className="mx-2 h-10 w-px bg-white/20 rounded-full"></div>
 
             <div className="flex flex-col leading-tight">
-              <h1 className="text-red-500 text-xl font-serif tracking-wide uppercase">
+              <h1 className="text-[#c35012] text-xl font-semibold tracking-wide uppercase">
                 {title}
               </h1>
 

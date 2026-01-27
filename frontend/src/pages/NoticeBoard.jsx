@@ -64,38 +64,35 @@ function NoticeBoard() {
      Fetch Notices (backend pagination)
   ======================= */
   const fetchNotices = useCallback(
-    async (page = 1) => {
-      setLoading(true);
-      try {
-        const params = { page, limit: 10 };
+  async (page = 1) => {
+    setLoading(true);
+    try {
+      const params = { page, limit: 10 };
 
-        if (searchTerm) params.search = searchTerm;
-        if (selectedDate) {
-          params.from = selectedDate;
-          params.to = selectedDate;
-        }
+      if (searchTerm) params.search = searchTerm;
+      if (selectedDate) params.date = selectedDate;
 
-        // apply category filter ONLY if real category selected
-        if (selected.id && selected.id !== "BOOKMARKS") {
-          params.categoryId = selected.id;
-        }
-
-        const res = await axios.get("/noticeboard/notices", {
-          params,
-          withCredentials: true,
-        });
-
-        setNotices(res.data.data.items);
-        setPagination(res.data.data.pagination);
-      } catch (err) {
-        console.error(err);
-        setNotices([]);
-      } finally {
-        setLoading(false);
+      // apply category filter ONLY if real category selected
+      if (selected.id && selected.id !== "BOOKMARKS") {
+        params.categoryId = selected.id;
       }
-    },
-    [searchTerm, selectedDate, selected.id],
-  );
+
+      const res = await axios.get("/noticeboard/notices", {
+        params,
+        withCredentials: true,
+      });
+
+      setNotices(res.data.data.items);
+      setPagination(res.data.data.pagination);
+    } catch (err) {
+      console.error(err);
+      setNotices([]);
+    } finally {
+      setLoading(false);
+    }
+  },
+  [searchTerm, selectedDate, selected.id],
+);
 
   useEffect(() => {
     const t = setTimeout(() => fetchNotices(1), 300);
@@ -173,6 +170,7 @@ function NoticeBoard() {
                 type="date"
                 className="border px-3 py-2 rounded-md text-sm"
                 value={selectedDate}
+                max={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
 
