@@ -170,9 +170,10 @@ function NoticeBoard() {
                 type="date"
                 className="border px-3 py-2 rounded-md text-sm"
                 value={selectedDate}
-                max={new Date().toISOString().split("T")[0]}
+                max={new Date().toLocaleDateString("en-CA")}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
+
 
               <div className="relative w-72">
                 <input
