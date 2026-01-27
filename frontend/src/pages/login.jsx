@@ -50,12 +50,15 @@ export default function Login() {
       }
 
       // ✅ SAVE AUTH STATE
-      dispatch(
-        loginSuccess({
-          token: res.data.data.accessToken,
-          role: role === "STUDENT" ? "STUDENT" : "PROFESSOR",
-        })
-      );
+      const authData = {
+        token: res.data.data.accessToken,
+        role,
+        userIdentifier: role === "STUDENT" ? rollNo : email,
+      };
+
+      localStorage.setItem("auth", JSON.stringify(authData));
+      dispatch(loginSuccess(authData));
+      
 
       navigate("/home");
     } catch (err) {

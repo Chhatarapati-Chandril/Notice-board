@@ -3,14 +3,16 @@ import { loginSuccess, authChecked } from "./authslice.js";
 
 export const restoreSession = () => async (dispatch) => {
   try {
-    const res = await api.post("/auth/refresh");
-    const { accessToken, role } = res.data.data;
+    const savedAuth = JSON.parse(localStorage.getItem("auth"));
 
-    dispatch(loginSuccess({ token: accessToken, role }));
+    if (!savedAuth?.token) throw new Error("No session");
+
+    dispatch(loginSuccess(savedAuth));
   } catch {
-    dispatch(authChecked()); // 👈 tells app “auth check done”
+    dispatch(authChecked());
   }
 };
+
 // Student login
 export const studentLogin = (payload) =>
   api.post("/auth/student/login", payload);
