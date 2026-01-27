@@ -12,6 +12,7 @@ CREATE TABLE students (
 );
 desc students;
 
+
 CREATE TABLE professors (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(100) NOT NULL UNIQUE,
@@ -20,12 +21,17 @@ CREATE TABLE professors (
 );
 desc professors;
 
+
 CREATE TABLE notice_categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) NOT NULL UNIQUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 desc notice_categories;
+
+ALTER TABLE notice_categories
+ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
+
 
 CREATE TABLE notices (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -44,6 +50,7 @@ CREATE TABLE notices (
 );
 desc notices;
 
+
 CREATE TABLE notice_files (
   id INT AUTO_INCREMENT PRIMARY KEY,
   notice_id INT NOT NULL,
@@ -56,6 +63,7 @@ CREATE TABLE notice_files (
 );
 desc notice_files;
 
+
 CREATE TABLE password_reset_otp (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_type ENUM('STUDENT', 'PROFESSOR') NOT NULL,
@@ -66,6 +74,7 @@ CREATE TABLE password_reset_otp (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 desc password_reset_otp;
+
 
 CREATE TABLE refresh_tokens (
   id INT AUTO_INCREMENT PRIMARY KEY,
