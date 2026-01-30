@@ -1,5 +1,5 @@
 import pool from "../db/db.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const getFilesByNoticeId = async (noticeId) => {
   const [rows] = await pool.query(
@@ -8,18 +8,16 @@ export const getFilesByNoticeId = async (noticeId) => {
     FROM notice_files
     WHERE notice_id = ?
     `,
-    [noticeId]
+    [noticeId],
   );
 
   return rows;
 };
 
-
 export const createAttachments = async (noticeId, files = []) => {
   if (!files.length) return;
 
   for (const file of files) {
-
     const uploaded = await uploadOnCloudinary(file.path);
 
     await pool.query(
@@ -29,10 +27,9 @@ export const createAttachments = async (noticeId, files = []) => {
       `,
       [
         noticeId,
-        uploaded.url,        // ✅ Cloudinary URL
+        uploaded.url, // ✅ Cloudinary URL
         file.originalname,
-      ]
+      ],
     );
   }
 };
-

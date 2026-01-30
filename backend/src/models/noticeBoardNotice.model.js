@@ -6,7 +6,7 @@ export const getNotices = async ({
   search,
   categoryId,
   from,
-  to
+  to,
 }) => {
   const offset = (page - 1) * limit;
 
@@ -49,12 +49,11 @@ export const getNotices = async ({
     ORDER BY n.created_at DESC
     LIMIT ? OFFSET ?
     `,
-    [...params, Number(limit), Number(offset)]
+    [...params, Number(limit), Number(offset)],
   );
 
   return rows;
 };
-
 
 export const getNoticeById = async (id) => {
   const [rows] = await pool.query(
@@ -70,9 +69,8 @@ export const getNoticeById = async (id) => {
     JOIN notice_categories c ON c.id = n.notice_category_id
     WHERE n.id = ?
     `,
-    [id]
+    [id],
   );
 
   return rows[0] || null;
 };
-

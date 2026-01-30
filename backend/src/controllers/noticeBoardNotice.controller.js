@@ -51,7 +51,6 @@ export const getNotices = asyncHandler(async (req, res) => {
     }
   }
 
-
   const [rows] = await pool.query(
     `
     SELECT 
@@ -65,7 +64,7 @@ export const getNotices = asyncHandler(async (req, res) => {
     ORDER BY n.created_at DESC
     LIMIT ? OFFSET ?
     `,
-    [...params, limit, offset]
+    [...params, limit, offset],
   );
 
   const [[{ total }]] = await pool.query(
@@ -75,9 +74,8 @@ export const getNotices = asyncHandler(async (req, res) => {
     JOIN notice_categories c ON c.id = n.notice_category_id
     ${where}
     `,
-    params
+    params,
   );
-
 
   return res.json(
     new ApiResponse({
@@ -88,10 +86,9 @@ export const getNotices = asyncHandler(async (req, res) => {
         totalItems: total,
         totalPages: Math.ceil(total / limit),
       },
-    })
+    }),
   );
 });
-
 
 export const getNoticeById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -114,7 +111,7 @@ export const getNoticeById = asyncHandler(async (req, res) => {
       AND n.is_deleted = FALSE
       AND (n.is_public = TRUE OR ? = TRUE)
     `,
-    [id, isAuthenticated]
+    [id, isAuthenticated],
   );
 
   if (!notice) {
@@ -123,7 +120,7 @@ export const getNoticeById = asyncHandler(async (req, res) => {
 
   const [files] = await pool.query(
     `SELECT file_url, original_name FROM notice_files WHERE notice_id = ?`,
-    [id]
+    [id],
   );
 
   notice.files = files;
@@ -131,9 +128,7 @@ export const getNoticeById = asyncHandler(async (req, res) => {
   return res.json(new ApiResponse(notice));
 });
 
-
 export const createNotice = asyncHandler(async (req, res) => {
-
   devLog("USER:", req.user);
   devLog("BODY:", req.body);
   devLog("FILES:", req.files);
@@ -161,24 +156,20 @@ export const createNotice = asyncHandler(async (req, res) => {
     (title, content, notice_category_id, is_public, posted_by)
     VALUES (?, ?, ?, ?, ?)
     `,
-    [
-      title, 
-      content || null, 
-      parsedCategoryId, 
-      isPublic ? 1 : 0, 
-      req.user.id]
+    [title, content || null, parsedCategoryId, isPublic ? 1 : 0, req.user.id],
   );
 
   await createAttachments(result.insertId, req.files || []);
 
-  return res.status(201).json(
-    new ApiResponse(
-      { noticeId: result.insertId },
-      "Notice created successfully"
-    )
-  );
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        { noticeId: result.insertId },
+        "Notice created successfully",
+      ),
+    );
 });
-
 
 export const updateNotice = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -186,7 +177,7 @@ export const updateNotice = asyncHandler(async (req, res) => {
 
   const [[notice]] = await pool.query(
     `SELECT posted_by FROM notices WHERE id = ? AND is_deleted = FALSE`,
-    [id]
+    [id],
   );
 
   if (!notice) {
@@ -207,21 +198,20 @@ export const updateNotice = asyncHandler(async (req, res) => {
       is_public = COALESCE(?, is_public)
     WHERE id = ?
     `,
-    [title, content, categoryId, is_public, id]
+    [title, content, categoryId, is_public, id],
   );
 
-  return res.status(200).json(
-    new ApiResponse(null, "Notice updated successfully")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Notice updated successfully"));
 });
-
 
 export const deleteNotice = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const [[notice]] = await pool.query(
     `SELECT posted_by FROM notices WHERE id = ? AND is_deleted = FALSE`,
-    [id]
+    [id],
   );
 
   if (!notice) {
@@ -232,16 +222,12 @@ export const deleteNotice = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You can only delete your own notices");
   }
 
-  await pool.query(
-    `UPDATE notices SET is_deleted = TRUE WHERE id = ?`,
-    [id]
-  );
+  await pool.query(`UPDATE notices SET is_deleted = TRUE WHERE id = ?`, [id]);
 
-  return res.status(200).json(
-    new ApiResponse(null, "Notice deleted successfully")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(null, "Notice deleted successfully"));
 });
-
 
 export const getMyNotices = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
@@ -263,7 +249,7 @@ export const getMyNotices = asyncHandler(async (req, res) => {
     ORDER BY n.created_at DESC
     LIMIT ? OFFSET ?
     `,
-    [req.user.id, limit, offset]
+    [req.user.id, limit, offset],
   );
 
   return res.json(new ApiResponse(rows));

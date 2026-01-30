@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { 
-    getNoticeById, 
-    getNotices,
-    createNotice,
-    updateNotice,
-    deleteNotice,
-    getMyNotices
+import {
+  getNoticeById,
+  getNotices,
+  createNotice,
+  updateNotice,
+  deleteNotice,
+  getMyNotices,
 } from "../controllers/noticeBoardNotice.controller.js";
 
 import { requireAuth } from "../middlewares/auth.middleware.js";
@@ -15,25 +15,16 @@ import { optionalAuth } from "../middlewares/optionalAuth.middleware.js";
 
 // upload middleware
 
-const router = Router()
+const router = Router();
 
 // PUBLIC
-router.get("/", 
-    optionalAuth,
-    getNotices)
+router.get("/", optionalAuth, getNotices);
 
 // PROTECTED (must be BEFORE :id)
-router.get(
-  "/my",
-  requireAuth,
-  requireRole("PROFESSOR"),
-  getMyNotices
-)
+router.get("/my", requireAuth, requireRole("PROFESSOR"), getMyNotices);
 
 // PUBLIC
-router.get("/:id", 
-    optionalAuth,
-    getNoticeById)
+router.get("/:id", optionalAuth, getNoticeById);
 
 // PROTECTED
 
@@ -43,8 +34,8 @@ router.post(
   requireAuth,
   requireRole("PROFESSOR"),
   upload.array("files", 5),
-  createNotice
-)
+  createNotice,
+);
 
 // update
 router.patch(
@@ -52,15 +43,10 @@ router.patch(
   requireAuth,
   requireRole("PROFESSOR"),
   upload.array("files", 5),
-  updateNotice
-)
+  updateNotice,
+);
 
 // delete
-router.delete(
-  "/:id",
-  requireAuth,
-  requireRole("PROFESSOR"),
-  deleteNotice
-)
+router.delete("/:id", requireAuth, requireRole("PROFESSOR"), deleteNotice);
 
-export default router
+export default router;

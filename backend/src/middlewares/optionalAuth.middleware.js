@@ -12,7 +12,7 @@ export const optionalAuth = (req, _res, next) => {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     req.user = {
       id: decoded.userId,
-      role: decoded.role
+      role: decoded.role,
     };
   } catch {
     req.user = null; // invalid token → treat as guest

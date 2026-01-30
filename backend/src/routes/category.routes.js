@@ -4,9 +4,9 @@ import { getCategories } from "../controllers/category.controller.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { requireRole } from "../middlewares/role.middleware.js";
 
-const router = Router()
+const router = Router();
 
-router.route("/").get(getCategories)
+router.route("/").get(getCategories);
 
 // PROTECTED ROUTES (Admin / Professor)
 

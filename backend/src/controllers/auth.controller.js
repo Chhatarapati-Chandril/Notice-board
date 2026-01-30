@@ -57,7 +57,6 @@ export const studentLogin = asyncHandler(async (req, res) => {
   res.cookie("accessToken", accessToken, cookieOptions);
   res.cookie("refreshToken", refreshToken, cookieOptions);
 
-
   // 6. normal login success
   return res.status(200).json(
     new ApiResponse(

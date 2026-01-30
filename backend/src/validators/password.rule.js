@@ -1,10 +1,9 @@
 const isValidPassword = (password) => {
-    
-    if (typeof password !== "string") return false;
-    if (password.trim() === "") return false;
-    if (password.length < 8) return false;
+  if (typeof password !== "string") return false;
+  if (password.trim() === "") return false;
+  if (password.length < 8) return false;
 
-    return true;
-}
+  return true;
+};
 
-export default isValidPassword
+export default isValidPassword;

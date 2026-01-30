@@ -29,7 +29,7 @@ export const findValidOtpByOtp = async () => {
         WHERE used = FALSE
           AND expires_at > NOW()
         ORDER BY created_at DESC
-        LIMIT 1`
+        LIMIT 1`,
   );
   return rows[0] || null;
 };

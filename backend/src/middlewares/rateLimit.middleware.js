@@ -3,10 +3,7 @@ import ApiError from "../utils/ApiError.js";
 
 // Shared key generator (IP + identifier)
 const passwordRateLimitKey = (req) => {
-  const identifier =
-    req.body?.roll_no ||
-    req.body?.email ||
-    "unknown";
+  const identifier = req.body?.roll_no || req.body?.email || "unknown";
 
   // IPv6-safe IP handling
   return `${ipKeyGenerator(req)}:${identifier}`;
@@ -20,10 +17,7 @@ export const forgotPasswordLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: passwordRateLimitKey,
   handler: () => {
-    throw new ApiError(
-      429,
-      "Too many OTP requests. Please try again later."
-    );
+    throw new ApiError(429, "Too many OTP requests. Please try again later.");
   },
 });
 
@@ -37,7 +31,7 @@ export const changePasswordLimit = rateLimit({
   handler: () => {
     throw new ApiError(
       429,
-      "Too many password reset attempts. Try again later."
+      "Too many password reset attempts. Try again later.",
     );
   },
 });
