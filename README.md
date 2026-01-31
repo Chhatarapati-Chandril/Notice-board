@@ -12,13 +12,6 @@
 
 ---
 
-## Ports & Services
-- Backend API: http://localhost:8080
-- Frontend App: http://localhost:3000
-- API Base Path: /api/v1
-
----
-
 ## Project Structure
 - backend/ → Backend service
 - frontend/ → Frontend application
