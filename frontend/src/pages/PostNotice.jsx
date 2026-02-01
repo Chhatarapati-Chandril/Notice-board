@@ -27,22 +27,19 @@ function PostNotice() {
   });
 
   /* =======================
-     Fetch categories (BACKEND)
+     Fetch categories
   ======================= */
   useEffect(() => {
     axios
       .get("/noticeboard/categories", { withCredentials: true })
       .then((res) => setCategories(res.data.data))
-      .catch((err) => {
-        console.error(err);
-        alert("Failed to load categories");
-      });
+      .catch(() => alert("Failed to load categories"));
   }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
+    setForm((p) => ({
+      ...p,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
@@ -70,7 +67,7 @@ function PostNotice() {
       }
     }
 
-    setForm((prev) => ({ ...prev, files }));
+    setForm((p) => ({ ...p, files }));
   };
 
   const handleSubmit = async (e) => {
@@ -89,10 +86,7 @@ function PostNotice() {
       formData.append("content", form.content.trim());
       formData.append("categoryId", form.categoryId);
       formData.append("is_public", form.is_public ? "1" : "0");
-
-      form.files.forEach((file) => {
-        formData.append("files", file);
-      });
+      form.files.forEach((f) => formData.append("files", f));
 
       const res = await axios.post("/noticeboard/notices", formData, {
         withCredentials: true,
@@ -101,7 +95,6 @@ function PostNotice() {
       alert(res.data.message || "Notice posted successfully");
       navigate("/noticeboard", { replace: true });
     } catch (err) {
-      console.error(err);
       alert(
         err.response?.data?.message ||
           "Failed to post notice. Professor access required."
@@ -115,10 +108,16 @@ function PostNotice() {
     <>
       <HomeNav title="Post Notice" />
 
-      <div className="flex h-screen bg-[#46494A] pt-20">
+      <div className="flex min-h-screen bg-[#f3f5f9] pt-20">
         <div className="flex-1 p-8 overflow-auto">
-          <div className="bg-white rounded-xl p-6 shadow-lg max-w-3xl mx-auto">
-            <h2 className="text-2xl font-semibold text-blue-600 mb-6">
+          <div
+            className="
+              bg-white rounded-xl
+              shadow-[0_10px_30px_rgba(30,90,168,0.15)]
+              p-8 max-w-3xl mx-auto
+            "
+          >
+            <h2 className="text-2xl font-bold text-[#0f2a44] mb-6">
               Post a New Notice
             </h2>
 
@@ -130,16 +129,24 @@ function PostNotice() {
                 value={form.title}
                 onChange={handleChange}
                 placeholder="Notice title"
-                className="w-full border px-4 py-2 rounded-md"
+                className="
+                  w-full border border-gray-300
+                  px-4 py-2 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-200
+                "
                 required
               />
 
-              {/* CATEGORY (BACKEND-DRIVEN) */}
+              {/* CATEGORY */}
               <select
                 name="categoryId"
                 value={form.categoryId}
                 onChange={handleChange}
-                className="w-full border px-4 py-2 rounded-md"
+                className="
+                  w-full border border-gray-300
+                  px-4 py-2 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-200
+                "
                 required
               >
                 <option value="">Select Category</option>
@@ -156,18 +163,23 @@ function PostNotice() {
                 value={form.content}
                 onChange={handleChange}
                 rows="8"
-                placeholder="Notice content..."
-                className="w-full border px-4 py-2 rounded-md"
+                placeholder="Write the notice content here..."
+                className="
+                  w-full border border-gray-300
+                  px-4 py-2 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-200
+                "
                 required
               />
 
               {/* PUBLIC */}
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
                   name="is_public"
                   checked={form.is_public}
                   onChange={handleChange}
+                  className="accent-blue-600"
                 />
                 Make notice public
               </label>
@@ -178,15 +190,24 @@ function PostNotice() {
                 multiple
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 onChange={handleFileChange}
-                className="w-full border px-4 py-2 rounded-md"
+                className="
+                  w-full border border-gray-300
+                  px-4 py-2 rounded-lg
+                "
               />
 
               {/* ACTIONS */}
-              <div className="flex gap-4">
+              <div className="flex gap-4 pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-md disabled:opacity-50"
+                  className="
+                    bg-[#1e5aa8] text-white
+                    px-6 py-2 rounded-lg
+                    shadow-sm
+                    hover:bg-[#174a8a]
+                    disabled:opacity-50
+                  "
                 >
                   {loading ? "Publishing…" : "Publish"}
                 </button>
@@ -195,7 +216,11 @@ function PostNotice() {
                   type="button"
                   disabled={loading}
                   onClick={() => navigate("/noticeboard")}
-                  className="bg-gray-200 px-6 py-2 rounded-md"
+                  className="
+                    bg-gray-200 text-gray-700
+                    px-6 py-2 rounded-lg
+                    hover:bg-gray-300
+                  "
                 >
                   Cancel
                 </button>

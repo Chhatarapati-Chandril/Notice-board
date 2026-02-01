@@ -1,37 +1,24 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import ProfileMenu from "./ProfileMenu";
 
-export default function HomeNav({ title = "Our Portal", subtitle }) {
+export default function HomeNav({ title = "Our Portal", subtitle = "Official Notice Board of IITSNP" }) {
   return (
-    <nav className="w-full bg-[#3a3f45] shadow-lg fixed top-0 z-20 border-b border-white/5">
+    <nav className="w-full bg-[#0f2a44] fixed top-0 z-20 shadow-[0_10px_30px_rgba(30,90,168,0.15)]">
       <div className="flex justify-between items-center h-20 px-4">
 
-        {/* LEFT: Logo + Dynamic Title */}
-        <Link to="/home" className="flex items-center cursor-pointer">
+        {/* LEFT */}
+        <div className="flex items-center gap-3">
           <img
             className="h-12 w-12 object-contain"
             src={logo}
             alt="College Logo"
           />
-
-          <div className="hidden sm:flex items-center ml-3">
-            <div className="mx-2 h-10 w-px bg-white/20 rounded-full"></div>
-
-            <div className="flex flex-col leading-tight">
-              <h1 className="text-[#c35012] text-xl font-semibold tracking-wide uppercase">
-                {title}
-              </h1>
-
-              {subtitle && (
-                <span className="text-gray-400 text-sm font-sans">
-                  {subtitle}
-                </span>
-              )}
-            </div>
+          <div className="hidden sm:flex flex-col">
+            <h1 className="text-white text-xl font-semibold">{title}</h1>
+            <span className="text-gray-300 text-sm">{subtitle}</span>
           </div>
-        </Link>
+        </div>
 
         {/* RIGHT */}
         <ProfileMenu />

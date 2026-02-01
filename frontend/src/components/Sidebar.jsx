@@ -1,25 +1,17 @@
-// src/components/Sidebar.jsx
-import React from "react";
-
-function Sidebar({ options, selected, setSelected }) {
+export default function Sidebar() {
   return (
-    <div className="w-64 bg-gray-800 text-white h-full p-5">
-      <h2 className="text-2xl font-bold mb-6">My Portal</h2>
-      <div className="flex flex-col gap-2">
-        {options.map((item) => (
-          <div
-            key={item.name}
-            onClick={() => setSelected(item.name)}
-            className={`cursor-pointer p-2 rounded ${
-              selected === item.name ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            {item.name}
-          </div>
-        ))}
+    <div className="w-64 bg-white shadow-[0_10px_30px_rgba(30,90,168,0.15)]
+      rounded-lg p-5 flex flex-col gap-4
+      h-[calc(100vh-80px)] sticky top-28">
+      
+      <h2 className="text-2xl font-bold text-[#0f2a44] mb-4">
+        My Portal
+      </h2>
+
+      <div className="p-3 bg-[#eef3fb] text-[#1e5aa8]
+        rounded-lg font-semibold text-center shadow-sm">
+        Apps
       </div>
     </div>
   );
 }
-
-export default Sidebar;

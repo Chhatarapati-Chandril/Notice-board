@@ -8,54 +8,80 @@ import {
 } from "react-icons/fa";
 
 function NoticeSidebar({ selected, setSelected, options }) {
-  // dropdown UI state (purely visual)
-  const [open, setOpen] = useState({
-    categories: true,
-  });
+  const [open, setOpen] = useState({ categories: true });
 
   return (
-    <div className="w-64 bg-[#6a767b] text-white p-5 flex flex-col h-full">
-      {/* TOP */}
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Notices</h2>
+    <div
+      className="
+        w-64 bg-white
+        shadow-[0_10px_30px_rgba(30,90,168,0.15)]
+        rounded-lg
+        p-5 flex flex-col gap-4
+        h-[calc(100vh-80px)]
+        sticky top-28
+        overflow-y-auto
+      "
+    >
+      {/* TITLE */}
+      <h2 className="text-2xl font-bold text-[#0f2a44] mb-2">
+        Notices
+      </h2>
 
-        {/* ALL / BOOKMARKS */}
-        {options
-          .filter((o) => o.id === null || o.id === "BOOKMARKS")
-          .map((option) => (
-            <SidebarItem
-              key={option.id ?? option.name}
-              icon={option.id === "BOOKMARKS" ? <FaBookmark /> : <FaBell />}
-              option={option}
-              selected={selected}
-              setSelected={setSelected}
-            />
-          ))}
+      {/* ALL / BOOKMARKS */}
+      {options
+        .filter((o) => o.id === null || o.id === "BOOKMARKS")
+        .map((option) => (
+          <SidebarItem
+            key={option.id ?? option.name}
+            icon={option.id === "BOOKMARKS" ? <FaBookmark /> : <FaBell />}
+            option={option}
+            selected={selected}
+            setSelected={setSelected}
+          />
+        ))}
 
-        {/* CATEGORIES */}
-        <Dropdown
-          icon={<FaBuilding />}
-          title="Categories"
-          open={open.categories}
-          toggle={() =>
-            setOpen((prev) => ({
-              ...prev,
-              categories: !prev.categories,
-            }))
+      {/* CATEGORIES */}
+      <div className="mt-2">
+        <div
+          onClick={() =>
+            setOpen((p) => ({ ...p, categories: !p.categories }))
           }
+          className="
+            flex items-center justify-between
+            px-3 py-2 rounded-lg
+            cursor-pointer
+            bg-[#eef3fb] text-[#1e5aa8]
+            font-semibold
+            shadow-sm
+          "
         >
-          {options
-            .filter((o) => o.id && o.id !== "BOOKMARKS")
-            .map((option) => (
-              <SidebarItem
-                key={option.id}
-                icon={<FaUsers />}
-                option={option}
-                selected={selected}
-                setSelected={setSelected}
-              />
-            ))}
-        </Dropdown>
+          <div className="flex items-center gap-3">
+            <FaBuilding />
+            Categories
+          </div>
+          <FaChevronDown
+            size={12}
+            className={`transition-transform ${
+              open.categories ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {open.categories && (
+          <div className="ml-2 mt-2 space-y-1 text-sm">
+            {options
+              .filter((o) => o.id && o.id !== "BOOKMARKS")
+              .map((option) => (
+                <SidebarItem
+                  key={option.id}
+                  icon={<FaUsers />}
+                  option={option}
+                  selected={selected}
+                  setSelected={setSelected}
+                />
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -63,50 +89,27 @@ function NoticeSidebar({ selected, setSelected, options }) {
 
 export default NoticeSidebar;
 
-/* ---------------- HELPERS ---------------- */
+/* ---------------- Sidebar Item ---------------- */
 
 function SidebarItem({ icon, option, selected, setSelected }) {
   const active = selected?.id === option.id;
 
   return (
     <div
-      onClick={() => setSelected(option)} // ✅ PASS OBJECT
-      className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer text-sm mb-1 transition-all
+      onClick={() => setSelected(option)}
+      className={`
+        flex items-center gap-3
+        px-3 py-2 rounded-lg
+        cursor-pointer transition-all
         ${
           active
-            ? "bg-gray-700 font-semibold border-l-4 border-blue-400"
-            : "hover:bg-gray-700"
+            ? "bg-[#eef3fb] text-[#1e5aa8] font-semibold shadow-sm"
+            : "text-[#0f2a44] hover:bg-[#f3f6fb]"
         }
       `}
     >
-      {icon && <span className="text-sm">{icon}</span>}
+      {icon}
       {option.name}
-    </div>
-  );
-}
-
-function Dropdown({ title, icon, open, toggle, children }) {
-  return (
-    <div className="mt-4">
-      <div
-        onClick={toggle}
-        className="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer hover:bg-gray-700 font-medium"
-      >
-        <div className="flex items-center gap-3">
-          {icon}
-          {title}
-        </div>
-        <FaChevronDown
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-          size={12}
-        />
-      </div>
-
-      {open && (
-        <div className="ml-4 mt-2 space-y-1 text-sm text-gray-200">
-          {children}
-        </div>
-      )}
     </div>
   );
 }

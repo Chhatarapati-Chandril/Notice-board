@@ -72,7 +72,7 @@ export default function ProfileMenu() {
               navigate("/home");
               setOpen(false);
             }}
-            className="w-full text-left px-4 py-2 text-gray-200 hover:bg-gray-600"
+            className="w-full text-left px-4 py-2 cursor-pointer text-gray-200 hover:bg-gray-600"
           >
             Home
           </button>
@@ -80,7 +80,7 @@ export default function ProfileMenu() {
           {/* LOGOUT */}
           <button
             onClick={handleLogout}
-            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10"
+            className="w-full text-left px-4 py-2 cursor-pointer text-red-400 hover:bg-red-500/10"
           >
             Logout
           </button>

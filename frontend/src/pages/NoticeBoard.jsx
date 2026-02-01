@@ -8,8 +8,6 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import FloatingButton from "../components/FloatingButton";
 
-
-
 function NoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -23,8 +21,6 @@ function NoticeBoard() {
 
   const role = useSelector((state) => state.auth.role);
 
-
-  // sidebar selection (object, NOT string)
   const [selected, setSelected] = useState({
     name: "All Notices",
     id: null,
@@ -34,7 +30,6 @@ function NoticeBoard() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedNotice, setSelectedNotice] = useState(null);
 
-  // frontend-only bookmarks
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("noticeBookmarks")) || [];
@@ -43,16 +38,9 @@ function NoticeBoard() {
     }
   });
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const handlePostClick = () => navigate("/post-notice");
 
-  const handlePostClick = () => {
-  navigate("/post-notice");
-};
-
-
-  /* =======================
-     Fetch Categories
-  ======================= */
   useEffect(() => {
     axios
       .get("/noticeboard/categories", { withCredentials: true })
@@ -60,61 +48,48 @@ function NoticeBoard() {
       .catch(console.error);
   }, []);
 
-  /* =======================
-     Fetch Notices (backend pagination)
-  ======================= */
   const fetchNotices = useCallback(
-  async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = { page, limit: 10 };
+    async (page = 1) => {
+      setLoading(true);
+      try {
+        const params = { page, limit: 10 };
+        if (searchTerm) params.search = searchTerm;
+        if (selectedDate) params.date = selectedDate;
+        if (selected.id && selected.id !== "BOOKMARKS") {
+          params.categoryId = selected.id;
+        }
 
-      if (searchTerm) params.search = searchTerm;
-      if (selectedDate) params.date = selectedDate;
+        const res = await axios.get("/noticeboard/notices", {
+          params,
+          withCredentials: true,
+        });
 
-      // apply category filter ONLY if real category selected
-      if (selected.id && selected.id !== "BOOKMARKS") {
-        params.categoryId = selected.id;
+        setNotices(res.data.data.items);
+        setPagination(res.data.data.pagination);
+      } catch {
+        setNotices([]);
+      } finally {
+        setLoading(false);
       }
-
-      const res = await axios.get("/noticeboard/notices", {
-        params,
-        withCredentials: true,
-      });
-
-      setNotices(res.data.data.items);
-      setPagination(res.data.data.pagination);
-    } catch (err) {
-      console.error(err);
-      setNotices([]);
-    } finally {
-      setLoading(false);
-    }
-  },
-  [searchTerm, selectedDate, selected.id],
-);
+    },
+    [searchTerm, selectedDate, selected.id]
+  );
 
   useEffect(() => {
     const t = setTimeout(() => fetchNotices(1), 300);
     return () => clearTimeout(t);
   }, [fetchNotices]);
 
-  /* =======================
-     Persist bookmarks
-  ======================= */
   useEffect(() => {
     localStorage.setItem("noticeBookmarks", JSON.stringify(bookmarkedIds));
   }, [bookmarkedIds]);
 
   const toggleBookmark = (id) => {
     setBookmarkedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  /* =======================
-     Modal fetch
-  ======================= */
   const handleNoticeClick = async (notice) => {
     const res = await axios.get(`/noticeboard/notices/${notice.id}`, {
       withCredentials: true,
@@ -122,41 +97,33 @@ function NoticeBoard() {
     setSelectedNotice(res.data.data);
   };
 
-  /* =======================
-     Display logic
-     (Bookmarks = frontend filter only)
-  ======================= */
   const displayNotices =
     selected.id === "BOOKMARKS"
       ? notices.filter((n) => bookmarkedIds.includes(n.id))
       : notices;
 
-  const formatDate = (d) =>
-    new Date(d).toLocaleDateString("en-GB");
+  const formatDate = (d) => new Date(d).toLocaleDateString("en-GB");
 
   return (
     <>
       <HomeNav title="Notice Board" />
 
-      <div className="flex h-screen bg-[#46494A] pt-20">
+      <div className="flex min-h-screen bg-[#f3f5f9] pt-20">
         <NoticeSidebar
           selected={selected}
           setSelected={setSelected}
           options={[
             { name: "All Notices", id: null },
             { name: "Bookmarks", id: "BOOKMARKS" },
-            ...categories.map((c) => ({
-              name: c.name,
-              id: c.id,
-            })),
+            ...categories.map((c) => ({ name: c.name, id: c.id })),
           ]}
         />
 
         <div className="flex-1 p-8 overflow-auto">
-          <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="bg-white rounded-xl p-6 shadow-md">
             {/* HEADER */}
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-blue-600">
+              <h2 className="text-2xl font-semibold text-[#1e5aa8]">
                 {selected.name}
               </h2>
               <p className="text-sm text-gray-500">
@@ -165,7 +132,7 @@ function NoticeBoard() {
             </div>
 
             {/* FILTERS */}
-            <div className="flex gap-4 mb-6">
+            <div className="flex flex-wrap gap-4 mb-6">
               <input
                 type="date"
                 className="border px-3 py-2 rounded-md text-sm"
@@ -174,31 +141,27 @@ function NoticeBoard() {
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
 
-
               <div className="relative w-72">
                 <input
                   type="text"
-                  placeholder="Search by notice..."
+                  placeholder="Search notices..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="border px-3 py-2 pr-10 rounded-md w-full text-sm"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                  <FaSearch />
-                </span>
-
+                <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
 
             {/* TABLE */}
             <div className="overflow-x-auto">
-              <table className="w-full border border-gray-300 text-sm rounded-md">
-                <thead className="bg-gray-100">
+              <table className="w-full border text-sm rounded-lg overflow-hidden">
+                <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="border px-4 py-3 text-center w-6">
-                      Bookmark
+                    <th className="border px-4 py-3 text-center w-8">
+                      ☆
                     </th>
-                    <th className="border px-4 py-3 text-left">From</th>
+                    <th className="border px-4 py-3 text-left">Category</th>
                     <th className="border px-4 py-3 text-left">Notice</th>
                     <th className="border px-4 py-3 text-center">Date</th>
                   </tr>
@@ -207,16 +170,13 @@ function NoticeBoard() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-6">
+                      <td colSpan="4" className="py-8 text-center">
                         Loading…
                       </td>
                     </tr>
                   ) : displayNotices.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan="4"
-                        className="text-center py-6 text-gray-400"
-                      >
+                      <td colSpan="4" className="py-8 text-center text-gray-400">
                         No notices available
                       </td>
                     </tr>
@@ -233,25 +193,19 @@ function NoticeBoard() {
                               e.stopPropagation();
                               toggleBookmark(n.id);
                             }}
-                            className={`text-xl ${
-                              bookmarkedIds.includes(n.id)
-                                ? "text-blue-500"
-                                : "text-gray-400"
-                            }`}
                           >
                             {bookmarkedIds.includes(n.id) ? (
-                                <FaBookmark className="text-blue-500" />
-                              ) : (
-                                <FaRegBookmark className="text-gray-400" />
-                              )}
-
+                              <FaBookmark className="text-blue-500" />
+                            ) : (
+                              <FaRegBookmark className="text-gray-400" />
+                            )}
                           </span>
                         </td>
 
                         <td className="border px-4 py-3">
                           <span
                             className={`px-2 py-1 rounded text-xs font-medium ${getCategoryBadgeClass(
-                              n.category,
+                              n.category
                             )}`}
                           >
                             {n.category}
@@ -271,88 +225,13 @@ function NoticeBoard() {
                 </tbody>
               </table>
             </div>
-
-            {/* PAGINATION */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                <button
-                  disabled={pagination.page === 1}
-                  onClick={() => fetchNotices(pagination.page - 1)}
-                  className="px-4 py-2 border rounded disabled:opacity-50"
-                >
-                  Prev
-                </button>
-
-                <span className="text-sm text-gray-600">
-                  Page {pagination.page} of {pagination.totalPages}
-                </span>
-
-                <button
-                  disabled={pagination.page === pagination.totalPages}
-                  onClick={() => fetchNotices(pagination.page + 1)}
-                  className="px-4 py-2 border rounded disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* MODAL */}
-      {selectedNotice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-2xl rounded-xl shadow-xl p-6 relative">
-            <button
-              onClick={() => setSelectedNotice(null)}
-              className="absolute top-3 right-4 text-xl text-gray-500 hover:text-black cursor-pointer"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-2xl font-semibold text-blue-600 mb-2">
-              {selectedNotice.title}
-            </h2>
-
-            <div className="flex justify-between text-sm text-gray-500 mb-4">
-              <span>{selectedNotice.category}</span>
-              <span>{formatDate(selectedNotice.created_at)}</span>
-            </div>
-
-           <div className="text-gray-700 leading-relaxed max-h-80 overflow-y-auto">
-  {selectedNotice.content}
-
-  {selectedNotice.files?.length > 0 && (
-    <div className="mt-4">
-      <h3 className="text-sm font-semibold text-gray-600 mb-2">
-        Attachments
-      </h3>
-
-      <ul className="space-y-1">
-        {selectedNotice.files.map((file, idx) => (
-          <li key={idx}>
-            <a
-              href={file.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline text-sm"
-            >
-              {file.original_name}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )}
-</div>
-          </div>
-        </div>
+      {role === "PROFESSOR" && (
+        <FloatingButton onClick={handlePostClick} />
       )}
-    {role === "PROFESSOR" && (
-    <FloatingButton onClick={handlePostClick} />
-  )}
-
     </>
   );
 }
