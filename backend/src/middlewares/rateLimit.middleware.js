@@ -3,11 +3,52 @@ import ApiError from "../utils/ApiError.js";
 
 // Shared key generator (IP + identifier)
 const passwordRateLimitKey = (req) => {
-  const identifier = req.body?.roll_no || req.body?.email || "unknown";
+  const identifier = req.body?.roll_no || req.body?.email;
+  
+  if (!identifier) {
+    return ipKeyGenerator(req)
+  }
 
   // IPv6-safe IP handling
   return `${ipKeyGenerator(req)}:${identifier}`;
 };
+
+// Admin login
+export const adminLoginLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: passwordRateLimitKey,
+  handler: (req, res, next) => {
+    next(new ApiError(429, "Too many admin login attempts. Access temporarily blocked."));
+  },
+});
+
+// Admin Reset password
+export const changeAdminPasswordLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: passwordRateLimitKey,
+  handler: (req, res, next) => {
+    next(new ApiError(429, "Too many password reset attempts. Try again later."));
+  },
+});
+
+
+// Login 
+export const loginLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: passwordRateLimitKey,
+  handler: (req, res, next) => {
+    next(new ApiError(429, "Too many login attempts. Try again later."));
+  },
+});
 
 // Forgot password (OTP send)
 export const forgotPasswordLimit = rateLimit({
@@ -16,8 +57,8 @@ export const forgotPasswordLimit = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   keyGenerator: passwordRateLimitKey,
-  handler: () => {
-    throw new ApiError(429, "Too many OTP requests. Please try again later.");
+  handler: (req, res, next) => {
+    next(new ApiError(429, "Too many OTP requests. Please try again later."));
   },
 });
 
@@ -28,10 +69,7 @@ export const changePasswordLimit = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   keyGenerator: passwordRateLimitKey,
-  handler: () => {
-    throw new ApiError(
-      429,
-      "Too many password reset attempts. Try again later.",
-    );
+  handler: (req, res, next) => {
+    next(new ApiError(429, "Too many password reset attempts. Try again later."));
   },
 });

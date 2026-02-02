@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto"
 
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
@@ -7,7 +8,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 
 import { findStudentByRollNo } from "../models/student.model.js";
 import { findProfessorByEmail } from "../models/professor.model.js";
-import { findRefreshToken } from "../models/refreshToken.model.js";
+import { findRefreshToken, deleteAllRefreshTokens } from "../models/refreshToken.model.js";
 
 import normalizeRollNo from "../validators/rollno.rule.js";
 import normalizeEmail from "../validators/email.rule.js";
@@ -126,7 +127,7 @@ export const logout = asyncHandler(async (req, res) => {
 
   // Case 1: authenticated user (logout from all devices)
   if (req.user) {
-    await deleteAllRefreshTokensForUser(req.user.id, req.user.role);
+    await deleteAllRefreshTokens(req.user.id, req.user.role);
   }
 
   // Case 2: fallback logout (single session)
@@ -197,6 +198,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   let user, userId, userEmail;
 
+  const resetContext = crypto.randomUUID();
+
   if (role === "STUDENT") {
     const normalizedRollNo = normalizeRollNo(roll_no);
     if (!normalizedRollNo) {
@@ -237,20 +240,25 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     userId,
     userType: role,
     email: userEmail,
+    resetContext
   });
 
   return res
     .status(200)
-    .json(new ApiResponse(null, "Verification code sent to registered email"));
+    .json(
+      new ApiResponse(
+        { resetContext }, 
+        "Verification code sent to registered email")
+    );
 });
 
 /**
  * VERIFY OTP
  */
 export const verifyOtp = asyncHandler(async (req, res) => {
-  const { otp } = req.body;
+  const { otp, resetContext } = req.body;
 
-  const reset_token = await verifyOtpService({ otp });
+  const reset_token = await verifyOtpService({ otp, resetContext });
 
   return res
     .status(200)

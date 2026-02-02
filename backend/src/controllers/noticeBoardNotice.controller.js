@@ -4,22 +4,38 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 
 import { createAttachments } from "../models/noticeBoardAttachment.model.js";
+import { getAllowedAudiencesForRole } from "../services/noticeAudience.service.js";
 import { devLog } from "../utils/logger.js";
+import {
+  MIN_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  AUDIENCES,
+  AUDIENCE_VALUES
+} from "../constants.js";
 
 export const getNotices = asyncHandler(async (req, res) => {
-  const isAuthenticated = Boolean(req.user);
+  const { search, categoryId, date, from, to } = req.query;
 
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
+  const page = Math.max(
+    Number(req.query.page) || MIN_PAGE_NUMBER,
+    MIN_PAGE_NUMBER,
+  );
+  const limit = Math.min(
+    Number(req.query.limit) || DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+  );
   const offset = (page - 1) * limit;
 
-  const { search, categoryId, from, to, date } = req.query;
+  const role = req.user?.role || "GUEST";
+  const allowedAudiences = getAllowedAudiencesForRole(role);
+  const placeholders = allowedAudiences.map(() => "?").join(",");
 
   let where = `
     WHERE n.is_deleted = FALSE
-    AND (n.is_public = TRUE OR ? = TRUE)
+    AND n.audience IN (${placeholders})
   `;
-  const params = [isAuthenticated];
+  const params = [...allowedAudiences];
 
   if (search) {
     where += " AND n.title LIKE ?";
@@ -44,7 +60,6 @@ export const getNotices = asyncHandler(async (req, res) => {
       where += " AND n.created_at >= ?";
       params.push(from);
     }
-
     if (to) {
       where += " AND n.created_at <= ?";
       params.push(to);
@@ -92,7 +107,10 @@ export const getNotices = asyncHandler(async (req, res) => {
 
 export const getNoticeById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const isAuthenticated = Boolean(req.user);
+
+  const role = req.user?.role || "GUEST";
+  const allowedAudiences = getAllowedAudiencesForRole(role);
+  const placeholders = allowedAudiences.map(() => "?").join(",");
 
   const [[notice]] = await pool.query(
     `
@@ -100,18 +118,18 @@ export const getNoticeById = asyncHandler(async (req, res) => {
       n.id,
       n.title,
       n.content,
-      n.is_public,
+      n.audience,
       n.created_at,
       c.name AS category,
-      p.email AS posted_by
+      a.email AS posted_by
     FROM notices n
     JOIN notice_categories c ON c.id = n.notice_category_id
-    LEFT JOIN professors p ON p.id = n.posted_by
+    LEFT JOIN admins a ON a.id = n.posted_by
     WHERE n.id = ?
       AND n.is_deleted = FALSE
-      AND (n.is_public = TRUE OR ? = TRUE)
+      AND n.audience IN (${placeholders})
     `,
-    [id, isAuthenticated],
+    [id, ...allowedAudiences],
   );
 
   if (!notice) {
@@ -133,10 +151,10 @@ export const createNotice = asyncHandler(async (req, res) => {
   devLog("BODY:", req.body);
   devLog("FILES:", req.files);
 
-  const { title, content, categoryId, is_public = true } = req.body;
+  const { title, content, categoryId, audience } = req.body;
 
-  if (!title || !categoryId) {
-    throw new ApiError(400, "Title and category are required");
+  if (!title || title.trim() === "" || !categoryId || !audience) {
+    throw new ApiError(400, "Title, category and audience are required");
   }
 
   const parsedCategoryId = Number(categoryId);
@@ -144,19 +162,17 @@ export const createNotice = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid category");
   }
 
-  const isPublic =
-    is_public === true ||
-    is_public === "true" ||
-    is_public === 1 ||
-    is_public === "1";
+  if (!AUDIENCE_VALUES.includes(audience)) {
+    throw new ApiError(400, "Invalid audience value");
+  }
 
   const [result] = await pool.query(
     `
     INSERT INTO notices
-    (title, content, notice_category_id, is_public, posted_by)
+    (title, content, notice_category_id, audience, posted_by)
     VALUES (?, ?, ?, ?, ?)
     `,
-    [title, content || null, parsedCategoryId, isPublic ? 1 : 0, req.user.id],
+    [title, content || null, parsedCategoryId, audience, req.user.id],
   );
 
   await createAttachments(result.insertId, req.files || []);
@@ -173,33 +189,61 @@ export const createNotice = asyncHandler(async (req, res) => {
 
 export const updateNotice = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, content, categoryId, is_public } = req.body;
+  const { title, content, categoryId, audience } = req.body;
+
+  if (
+  title === undefined &&
+  content === undefined &&
+  categoryId === undefined &&
+  audience === undefined
+  ) {
+    throw new ApiError(400, "Nothing to update");
+  }
+
+  if (title !== undefined && title.trim() === "") {
+    throw new ApiError(400, "Title cannot be empty");
+  }
+
+  let parsedCategoryId = null;
+
+  if (categoryId !== undefined) {
+    parsedCategoryId = Number(categoryId);
+    if (Number.isNaN(parsedCategoryId)) {
+      throw new ApiError(400, "Invalid category");
+    }
+  }
 
   const [[notice]] = await pool.query(
-    `SELECT posted_by FROM notices WHERE id = ? AND is_deleted = FALSE`,
+    `SELECT id FROM notices WHERE id = ? AND is_deleted = FALSE`,
     [id],
   );
-
   if (!notice) {
     throw new ApiError(404, "Notice not found");
   }
 
-  if (notice.posted_by !== req.user.id) {
-    throw new ApiError(403, "You can only edit your own notices");
+  if (audience !== undefined && !AUDIENCE_VALUES.includes(audience)) {
+    throw new ApiError(400, "Invalid audience value");
   }
 
   await pool.query(
     `
     UPDATE notices
-    SET 
+    SET
       title = COALESCE(?, title),
       content = COALESCE(?, content),
       notice_category_id = COALESCE(?, notice_category_id),
-      is_public = COALESCE(?, is_public)
+      audience = COALESCE(?, audience)
     WHERE id = ?
     `,
-    [title, content, categoryId, is_public, id],
+    [
+      title ?? null,
+      content ?? null,
+      parsedCategoryId,
+      audience ?? null,
+      id,
+    ]
   );
+
 
   return res
     .status(200)
@@ -210,16 +254,11 @@ export const deleteNotice = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const [[notice]] = await pool.query(
-    `SELECT posted_by FROM notices WHERE id = ? AND is_deleted = FALSE`,
+    `SELECT id FROM notices WHERE id = ? AND is_deleted = FALSE`,
     [id],
   );
-
   if (!notice) {
     throw new ApiError(404, "Notice not found");
-  }
-
-  if (notice.posted_by !== req.user.id) {
-    throw new ApiError(403, "You can only delete your own notices");
   }
 
   await pool.query(`UPDATE notices SET is_deleted = TRUE WHERE id = ?`, [id]);
@@ -227,30 +266,4 @@ export const deleteNotice = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(null, "Notice deleted successfully"));
-});
-
-export const getMyNotices = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = 10;
-  const offset = (page - 1) * limit;
-
-  const [rows] = await pool.query(
-    `
-    SELECT 
-      n.id,
-      n.title,
-      n.is_public,
-      n.created_at,
-      c.name AS category
-    FROM notices n
-    JOIN notice_categories c ON c.id = n.notice_category_id
-    WHERE n.posted_by = ?
-      AND n.is_deleted = FALSE
-    ORDER BY n.created_at DESC
-    LIMIT ? OFFSET ?
-    `,
-    [req.user.id, limit, offset],
-  );
-
-  return res.json(new ApiResponse(rows));
 });
