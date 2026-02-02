@@ -5,7 +5,6 @@ import {
   createNotice,
   updateNotice,
   deleteNotice,
-  getMyNotices,
 } from "../controllers/noticeBoardNotice.controller.js";
 
 import { requireAuth } from "../middlewares/auth.middleware.js";
@@ -13,15 +12,14 @@ import { requireRole } from "../middlewares/role.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 import { optionalAuth } from "../middlewares/optionalAuth.middleware.js";
 
+import { ROLES, MAX_NOTICE_FILES } from "../constants.js";
+
 // upload middleware
 
 const router = Router();
 
 // PUBLIC
 router.get("/", optionalAuth, getNotices);
-
-// PROTECTED (must be BEFORE :id)
-router.get("/my", requireAuth, requireRole("PROFESSOR"), getMyNotices);
 
 // PUBLIC
 router.get("/:id", optionalAuth, getNoticeById);
@@ -32,8 +30,8 @@ router.get("/:id", optionalAuth, getNoticeById);
 router.post(
   "/",
   requireAuth,
-  requireRole("PROFESSOR"),
-  upload.array("files", 5),
+  requireRole(ROLES.ADMIN),
+  upload.array("files", MAX_NOTICE_FILES),
   createNotice,
 );
 
@@ -41,12 +39,17 @@ router.post(
 router.patch(
   "/:id",
   requireAuth,
-  requireRole("PROFESSOR"),
-  upload.array("files", 5),
+  requireRole(ROLES.ADMIN),
+  upload.array("files", MAX_NOTICE_FILES),
   updateNotice,
 );
 
 // delete
-router.delete("/:id", requireAuth, requireRole("PROFESSOR"), deleteNotice);
+router.delete(
+  "/:id", 
+  requireAuth, 
+  requireRole(ROLES.ADMIN), 
+  deleteNotice
+);
 
 export default router;
