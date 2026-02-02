@@ -2,7 +2,8 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
-import ApiError from "../utils/ApiError.js";
+import { fileFilter } from "../validators/fileValidation.js";
+import { MAX_NOTICE_FILE_SIZE } from "../constants.js";
 
 const uploadDir = path.resolve("public/uploads/notices");
 
@@ -23,28 +24,12 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/jpg",
-  "image/webp",
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
-
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: MAX_NOTICE_FILE_SIZE,
   },
-  fileFilter(req, file, cb) {
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new ApiError(400, "Invalid file type"), false);
-    }
-  },
+  fileFilter,
 });
 
 export default upload;
