@@ -170,7 +170,7 @@ export default function Login() {
         </div>
       </div>
 
-      <FootNav />
+      {/* <FootNav /> */}
     </div>
   );
 }
