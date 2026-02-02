@@ -17,6 +17,9 @@ const app = express();
 // hide fingerprint
 app.disable("x-powered-by");
 
+// trust proxy
+app.set("trust proxy", 1);
+
 // core http security
 app.use(helmetMiddleware);
 app.use(corsMiddleware);

@@ -1,33 +1,27 @@
-import ApiError from "../../utils/ApiError.js";
-
 export const enforceContentType = (req, res, next) => {
-  // GET requests usually have no body
-  if (req.method === "GET") {
+  // Methods that never have bodies
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
   }
 
-  const contentType = req.headers["content-type"];
+  // Detect actual body presence
+  const hasBody =
+    Number(req.headers["content-length"]) > 0 ||
+    req.headers["transfer-encoding"];
 
-  // No content-type at all
-  if (!contentType) {
-    return next(new ApiError(415, "Content-Type header is required"));
-  }
-
-  // Allow JSON
-  if (req.is("application/json")) {
+  // No body → no need for Content-Type
+  if (!hasBody) {
     return next();
   }
 
-  // Allow file uploads (multer)
-  if (req.is("multipart/form-data")) {
-    return next();
-  }
+  // Enforce allowed types
+  if (req.is("application/json")) return next();
+  if (req.is("multipart/form-data")) return next();
 
-  // Everything else is rejected
   return next(
     new ApiError(
       415,
-      "Unsupported Content-Type. Use application/json or multipart/form-data",
-    ),
+      "Unsupported Content-Type. Use application/json or multipart/form-data"
+    )
   );
 };

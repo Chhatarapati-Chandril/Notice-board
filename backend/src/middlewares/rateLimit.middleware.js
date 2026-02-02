@@ -3,14 +3,19 @@ import ApiError from "../utils/ApiError.js";
 
 // Shared key generator (IP + identifier)
 const passwordRateLimitKey = (req) => {
-  const identifier = req.body?.roll_no || req.body?.email;
-  
-  if (!identifier) {
-    return ipKeyGenerator(req)
+  const ip = typeof req.ip === "string" ? req.ip : "unknown-ip";
+
+  let identifier = null;
+
+  if (req.body && typeof req.body === "object") {
+    identifier = req.body.roll_no || req.body.email || null;
   }
 
-  // IPv6-safe IP handling
-  return `${ipKeyGenerator(req)}:${identifier}`;
+  if (!identifier) {
+    return ip; // fallback: IP-only limiting
+  }
+
+  return `${ip}:${String(identifier).trim().toLowerCase()}`;
 };
 
 // Admin login
