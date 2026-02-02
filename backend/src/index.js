@@ -1,6 +1,8 @@
 import pool from "./db/db.js";
 import app from "./app.js";
+import "./jobs/cleanupPasswordResetOtp.job.js"
 import { devError, devLog } from "./utils/logger.js";
+
 
 const port = process.env.PORT || 8080;
 
@@ -29,4 +31,5 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 startServer();
