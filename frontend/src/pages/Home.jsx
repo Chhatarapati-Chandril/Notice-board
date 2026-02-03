@@ -68,9 +68,7 @@ function Home() {
           </div>
 
           {/* FLOATING BUTTON FOR PROFESSOR */}
-          {role === "PROFESSOR" && (
-            <FloatingButton onClick={handlePostClick} />
-          )}
+          {role === "ADMIN" && <FloatingButton onClick={handlePostClick} />}
         </div>
       </div>
     </div>

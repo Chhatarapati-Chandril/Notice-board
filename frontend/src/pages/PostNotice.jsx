@@ -22,7 +22,7 @@ function PostNotice() {
     title: "",
     categoryId: "",
     content: "",
-    is_public: true,
+    audience: "PUBLIC", // ✅ audience
     files: [],
   });
 
@@ -37,10 +37,10 @@ function PostNotice() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm((p) => ({
       ...p,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -85,7 +85,7 @@ function PostNotice() {
       formData.append("title", form.title.trim());
       formData.append("content", form.content.trim());
       formData.append("categoryId", form.categoryId);
-      formData.append("is_public", form.is_public ? "1" : "0");
+      formData.append("audience", form.audience); // ✅ send audience
       form.files.forEach((f) => formData.append("files", f));
 
       const res = await axios.post("/noticeboard/notices", formData, {
@@ -97,7 +97,7 @@ function PostNotice() {
     } catch (err) {
       alert(
         err.response?.data?.message ||
-          "Failed to post notice. Professor access required."
+          "Failed to post notice. Admin access required."
       );
     } finally {
       setLoading(false);
@@ -157,6 +157,24 @@ function PostNotice() {
                 ))}
               </select>
 
+              {/* AUDIENCE */}
+              <select
+                name="audience"
+                value={form.audience}
+                onChange={handleChange}
+                className="
+                  w-full border border-gray-300
+                  px-4 py-2 rounded-lg
+                  focus:outline-none focus:ring-2 focus:ring-blue-200
+                "
+                required
+              >
+                <option value="PUBLIC">Public</option>
+                <option value="STUDENTS">Students only</option>
+                <option value="PROFESSORS">Professors only</option>
+                <option value="BOTH">Students & Professors</option>
+              </select>
+
               {/* CONTENT */}
               <textarea
                 name="content"
@@ -171,18 +189,6 @@ function PostNotice() {
                 "
                 required
               />
-
-              {/* PUBLIC */}
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  name="is_public"
-                  checked={form.is_public}
-                  onChange={handleChange}
-                  className="accent-blue-600"
-                />
-                Make notice public
-              </label>
 
               {/* FILES */}
               <input

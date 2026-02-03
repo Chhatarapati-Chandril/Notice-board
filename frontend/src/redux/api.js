@@ -1,16 +1,16 @@
 import axios from "axios";
+import { logout, loginSuccess } from "./authslice";
 
 let reduxStore;
 
-// Inject redux store (called once during app init)
+// 🔌 Inject store ONCE in main.jsx
 export const injectStore = (store) => {
   reduxStore = store;
 };
 
 const api = axios.create({
-  baseURL: "/api/v1",     // ✅ Backend prefix
-  withCredentials: true,  // ✅ Cookies (refresh token)
-  // ❌ REMOVE global Content-Type
+  baseURL: "/api/v1",
+  withCredentials: true,
 });
 
 // =======================
@@ -24,25 +24,22 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // 🔥 CRITICAL FIX
-    // Only set JSON header if NOT FormData
     if (!(config.data instanceof FormData)) {
       config.headers["Content-Type"] = "application/json";
     } else {
-      // Let browser set multipart/form-data + boundary
       delete config.headers["Content-Type"];
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  Promise.reject
 );
 
 // =======================
 // RESPONSE INTERCEPTOR
 // =======================
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
     if (!error.response || !reduxStore) {
       return Promise.reject(error);
@@ -50,31 +47,36 @@ api.interceptors.response.use(
 
     const originalRequest = error.config;
 
-    // 🚫 Never retry refresh itself
-    if (originalRequest.url?.includes("/auth/refresh")) {
-      reduxStore.dispatch({ type: "auth/logout" });
+    // 🚫 Don't retry refresh itself
+    if (originalRequest.url.includes("/auth/refresh")) {
+      reduxStore.dispatch(logout());
+      window.location.href = "/login";
       return Promise.reject(error);
     }
 
-    // 🔁 Access token expired
+    // 🔁 Try refresh ONCE
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const res = await api.post("/auth/refresh");
-        const { accessToken, role } = res.data.data;
 
-        reduxStore.dispatch({
-          type: "auth/loginSuccess",
-          payload: { token: accessToken, role },
-        });
+        const { accessToken, role, userIdentifier } = res.data.data;
+
+        reduxStore.dispatch(
+          loginSuccess({
+            token: accessToken,
+            role,
+            userIdentifier,
+          })
+        );
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
-
-      } catch (refreshError) {
-        reduxStore.dispatch({ type: "auth/logout" });
-        return Promise.reject(refreshError);
+      } catch {
+        reduxStore.dispatch(logout());
+        window.location.href = "/login";
+        return Promise.reject(error);
       }
     }
 

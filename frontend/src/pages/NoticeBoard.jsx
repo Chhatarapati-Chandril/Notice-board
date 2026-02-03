@@ -19,7 +19,7 @@ function NoticeBoard() {
     totalPages: 1,
   });
 
-  const role = useSelector((state) => state.auth.role);
+  const { role, isAuthenticated } = useSelector((state) => state.auth);
 
   const [selected, setSelected] = useState({
     name: "All Notices",
@@ -158,9 +158,7 @@ function NoticeBoard() {
               <table className="w-full border text-sm rounded-lg overflow-hidden">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="border px-4 py-3 text-center w-8">
-                      ☆
-                    </th>
+                    <th className="border px-4 py-3 text-center w-8">☆</th>
                     <th className="border px-4 py-3 text-left">Category</th>
                     <th className="border px-4 py-3 text-left">Notice</th>
                     <th className="border px-4 py-3 text-center">Date</th>
@@ -229,7 +227,8 @@ function NoticeBoard() {
         </div>
       </div>
 
-      {role === "PROFESSOR" && (
+      {/* ✅ ONLY ADMIN CAN SEE + BUTTON */}
+      {isAuthenticated && role === "ADMIN" && (
         <FloatingButton onClick={handlePostClick} />
       )}
     </>

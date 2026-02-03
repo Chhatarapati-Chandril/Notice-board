@@ -2,13 +2,25 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 
-import { loginSuccess, authChecked } from "./redux/authslice";
+import { loginSuccess, authChecked, logout } from "./redux/authslice";
 
 import Login from "./pages/login";
+import AdminLogin from "./pages/AdminLogin";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import NoticeBoard from "./pages/NoticeBoard";
 import PostNotice from "./pages/PostNotice";
+import Unauthorized from "./pages/Unauthorized";
+import AdminChangePassword from "./pages/AdminChangePassword";
+
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
 
 function App() {
   const dispatch = useDispatch();
@@ -16,18 +28,24 @@ function App() {
     (state) => state.auth
   );
 
-  // ✅ Restore session from localStorage (STUDENT / PROFESSOR / GUEST)
+  // 🔐 Restore session SAFELY
   useEffect(() => {
-    const storedAuth = localStorage.getItem("auth");
+    const stored = localStorage.getItem("auth");
 
-    if (storedAuth) {
-      dispatch(loginSuccess(JSON.parse(storedAuth)));
+    if (stored) {
+      const parsed = JSON.parse(stored);
+
+      if (parsed.token && !isTokenExpired(parsed.token)) {
+        dispatch(loginSuccess(parsed));
+      } else {
+        dispatch(logout());
+        dispatch(authChecked());
+      }
     } else {
       dispatch(authChecked());
     }
   }, [dispatch]);
 
-  // ⏳ Wait until auth is resolved
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center text-lg">
@@ -42,56 +60,68 @@ function App() {
       <Route
         path="/"
         element={
-          isAuthenticated
-            ? <Navigate to="/home" replace />
-            : <Navigate to="/login" replace />
+          isAuthenticated ? (
+            <Navigate to="/home" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
-      {/* LOGIN */}
+      {/* USER LOGIN */}
       <Route
         path="/login"
         element={
-          isAuthenticated
+          isAuthenticated ? <Navigate to="/home" replace /> : <Login />
+        }
+      />
+
+      {/* ADMIN LOGIN */}
+      <Route
+        path="/admin/login"
+        element={
+          isAuthenticated && role === "ADMIN"
             ? <Navigate to="/home" replace />
-            : <Login />
+            : <AdminLogin />
         }
       />
 
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* HOME (STUDENT / PROFESSOR / GUEST) */}
+      {/* HOME */}
       <Route
         path="/home/*"
-        element={
-          isAuthenticated
-            ? <Home />
-            : <Navigate to="/login" replace />
-        }
+        element={isAuthenticated ? <Home /> : <Navigate to="/login" replace />}
       />
 
-      {/* NOTICE BOARD (READ-ONLY FOR GUEST) */}
+      {/* NOTICE BOARD */}
       <Route
         path="/noticeboard/*"
         element={
-          role === "STUDENT" || role === "PROFESSOR" || role === "GUEST"
-            ? <NoticeBoard />
-            : <Navigate to="/login" replace />
+          isAuthenticated ? <NoticeBoard /> : <Navigate to="/login" replace />
         }
       />
 
-
-      {/* POST NOTICE (ONLY PROFESSOR) */}
+      {/* POST NOTICE */}
       <Route
         path="/post-notice"
         element={
-          isAuthenticated && role === "PROFESSOR"
-            ? <PostNotice />
-            : <Navigate to="/home" replace />
+          role === "ADMIN" ? <PostNotice /> : <Navigate to="/unauthorized" replace />
         }
       />
 
-      {/* FALLBACK */}
+      {/* ADMIN CHANGE PASSWORD */}
+      <Route
+        path="/admin/change-password"
+        element={
+          role === "ADMIN"
+            ? <AdminChangePassword />
+            : <Navigate to="/unauthorized" replace />
+        }
+      />
+
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
