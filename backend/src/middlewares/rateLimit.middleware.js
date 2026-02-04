@@ -2,8 +2,8 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import ApiError from "../utils/ApiError.js";
 
 // Shared key generator (IP + identifier)
-const passwordRateLimitKey = (req) => {
-  const ip = typeof req.ip === "string" ? req.ip : "unknown-ip";
+const passwordRateLimitKey = (req, res) => {
+  const ip = ipKeyGenerator(req, res);
 
   let identifier = null;
 
