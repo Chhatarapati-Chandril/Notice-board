@@ -24,16 +24,22 @@ export default function ProfileMenu() {
   }, []);
 
   // ✅ Logout handler
-  const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout", {}, { withCredentials: true });
-    } catch (err) {
-      console.error("Logout API failed", err);
-    } finally {
-      dispatch(logout());
+ const handleLogout = async () => {
+  try {
+    await api.post("/auth/logout", {}, { withCredentials: true });
+  } catch (err) {
+    console.error("Logout API failed", err);
+  } finally {
+    dispatch(logout());
+
+    // ✅ Role-based redirect
+    if (role === "ADMIN") {
+      navigate("/admin/login", { replace: true });
+    } else {
       navigate("/login", { replace: true });
     }
-  };
+  }
+};
 
   return (
     <div className="relative" ref={menuRef}>

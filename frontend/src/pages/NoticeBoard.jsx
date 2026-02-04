@@ -3,7 +3,12 @@ import HomeNav from "../components/HomeNav";
 import NoticeSidebar from "../components/NoticeSidebar";
 import axios from "../redux/api";
 import { getCategoryBadgeClass } from "../constants/categoryColors";
-import { FaBookmark, FaRegBookmark, FaSearch } from "react-icons/fa";
+import {
+  FaBookmark,
+  FaRegBookmark,
+  FaSearch,
+  FaTrash,
+} from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import FloatingButton from "../components/FloatingButton";
@@ -19,6 +24,8 @@ function NoticeBoard() {
     limit: 10,
     totalPages: 1,
   });
+
+  const [limit, setLimit] = useState(10);
 
   const { role, isAuthenticated } = useSelector((state) => state.auth);
 
@@ -52,7 +59,7 @@ function NoticeBoard() {
     async (page = 1) => {
       setLoading(true);
       try {
-        const params = { page, limit: 10 };
+        const params = { page, limit };
         if (searchTerm) params.search = searchTerm;
         if (selectedDate) params.date = selectedDate;
         if (selected.id && selected.id !== "BOOKMARKS") {
@@ -72,7 +79,7 @@ function NoticeBoard() {
         setLoading(false);
       }
     },
-    [searchTerm, selectedDate, selected.id]
+    [searchTerm, selectedDate, selected.id, limit]
   );
 
   useEffect(() => {
@@ -102,6 +109,25 @@ function NoticeBoard() {
     }
   };
 
+  // ✅ DELETE NOTICE (ADMIN ONLY)
+  const handleDeleteNotice = async (e, noticeId) => {
+    e.stopPropagation();
+
+    if (!window.confirm("Are you sure you want to delete this notice?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/noticeboard/notices/${noticeId}`, {
+        withCredentials: true,
+      });
+
+      fetchNotices(pagination.page);
+    } catch {
+      alert("Failed to delete notice");
+    }
+  };
+
   const displayNotices =
     selected.id === "BOOKMARKS"
       ? notices.filter((n) => bookmarkedIds.includes(n.id))
@@ -127,24 +153,44 @@ function NoticeBoard() {
         <div className="flex-1 p-8 overflow-auto">
           <div className="bg-white rounded-xl p-6 shadow-md">
             {/* Filters */}
-            <div className="flex gap-4 mb-6">
-              <input
-                type="date"
-                value={selectedDate}
-                max={new Date().toLocaleDateString("en-CA")}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="border px-3 py-2 rounded-md text-sm"
-              />
-
-              <div className="relative w-72">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex gap-4">
                 <input
-                  type="text"
-                  placeholder="Search notices..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="border px-3 py-2 pr-10 rounded-md w-full text-sm"
+                  type="date"
+                  value={selectedDate}
+                  max={new Date().toLocaleDateString("en-CA")}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="border px-3 py-2 rounded-md text-sm"
                 />
-                <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+                <div className="relative w-72">
+                  <input
+                    type="text"
+                    placeholder="Search notices..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="border px-3 py-2 pr-10 rounded-md w-full text-sm"
+                  />
+                  <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Show</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    fetchNotices(1);
+                  }}
+                  className="border px-3 py-2 rounded-md"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                </select>
+                <span className="text-gray-600">entries</span>
               </div>
             </div>
 
@@ -156,13 +202,16 @@ function NoticeBoard() {
                   <th className="border px-4 py-3">Category</th>
                   <th className="border px-4 py-3">Notice</th>
                   <th className="border px-4 py-3">Date</th>
+                  {role === "ADMIN" && (
+                    <th className="border px-4 py-3">🗑️</th>
+                  )}
                 </tr>
               </thead>
 
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="4" className="py-8 text-center">
+                    <td colSpan="5" className="py-8 text-center">
                       Loading…
                     </td>
                   </tr>
@@ -186,6 +235,7 @@ function NoticeBoard() {
                           <FaRegBookmark className="text-gray-400" />
                         )}
                       </td>
+
                       <td className="border px-4 py-3">
                         <span
                           className={`px-2 py-1 rounded text-xs ${getCategoryBadgeClass(
@@ -195,17 +245,28 @@ function NoticeBoard() {
                           {n.category}
                         </span>
                       </td>
+
                       <td className="border px-4 py-3">{n.title}</td>
+
                       <td className="border px-4 py-3 text-center">
                         {formatDate(n.created_at)}
                       </td>
+
+                      {role === "ADMIN" && (
+                        <td
+                          className="border px-4 py-3 text-center text-red-500 hover:text-red-700"
+                          onClick={(e) => handleDeleteNotice(e, n.id)}
+                        >
+                          <FaTrash />
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
 
-            {/* ✅ PAGINATION */}
+            {/* Pagination */}
             <div className="flex justify-between items-center mt-6">
               <button
                 disabled={pagination.page === 1}
@@ -235,14 +296,17 @@ function NoticeBoard() {
       {isAuthenticated && role === "ADMIN" && (
         <FloatingButton onClick={handlePostClick} />
       )}
+    </>
+  );
+}
 
       {/* NOTICE MODAL */}
       {selectedNotice && (() => {
-      const attachments = Array.isArray(selectedNotice.files)
-  ? selectedNotice.files
-  : Array.isArray(selectedNotice.attachments)
-  ? selectedNotice.attachments
-  : [];
+        const attachments = Array.isArray(selectedNotice.files)
+          ? selectedNotice.files
+          : Array.isArray(selectedNotice.attachments)
+          ? selectedNotice.attachments
+          : [];
 
         return (
           <div
@@ -274,10 +338,7 @@ function NoticeBoard() {
 
               {attachments.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3 text-lg">
-                    Attachments
-                  </h3>
-
+                  <h3 className="font-semibold mb-3 text-lg">Attachments</h3>
                   <ul className="space-y-2">
                     {attachments.map((file, index) => {
                       const fileName =
@@ -301,7 +362,6 @@ function NoticeBoard() {
                           <span className="truncate max-w-[70%]">
                             {fileName}
                           </span>
-
                           <div className="flex gap-4">
                             <a
                               href={fileUrl}
@@ -311,7 +371,6 @@ function NoticeBoard() {
                             >
                               Open
                             </a>
-
                             <a
                               href={fileUrl}
                               download

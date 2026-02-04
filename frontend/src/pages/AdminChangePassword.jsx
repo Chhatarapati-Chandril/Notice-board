@@ -10,6 +10,7 @@ export default function AdminChangePassword() {
 
   const [form, setForm] = useState({
     curr_password: "",
+    admin_secret: "",
     new_password: "",
     confirm_password: "",
   });
@@ -24,10 +25,15 @@ export default function AdminChangePassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { curr_password, new_password, confirm_password } = form;
+    const {
+      curr_password,
+      admin_secret,
+      new_password,
+      confirm_password,
+    } = form;
 
     // ✅ Frontend validations
-    if (!curr_password || !new_password || !confirm_password) {
+    if (!curr_password || !admin_secret || !new_password || !confirm_password) {
       return alert("All fields are required");
     }
 
@@ -39,11 +45,6 @@ export default function AdminChangePassword() {
       return alert("New password must be different from current password");
     }
 
-    const adminSecret = import.meta.env.VITE_ADMIN_SECRET;
-    if (!adminSecret) {
-      return alert("Admin secret is missing. Check .env file.");
-    }
-
     setLoading(true);
 
     try {
@@ -51,7 +52,7 @@ export default function AdminChangePassword() {
         "/auth/admin/change-password",
         {
           curr_password,
-          admin_secret: adminSecret,
+          admin_secret,
           new_password,
         },
         { withCredentials: true }
@@ -72,12 +73,13 @@ export default function AdminChangePassword() {
 
       setForm({
         curr_password: "",
+        admin_secret: "",
         new_password: "",
         confirm_password: "",
       });
     } catch (err) {
       if (err.response?.status === 401) {
-        alert("Current password is incorrect");
+        alert("Current password or admin secret is incorrect");
       } else if (err.response?.status === 400) {
         alert("New password must be different from current password");
       } else {
@@ -115,6 +117,7 @@ export default function AdminChangePassword() {
           </h2>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Current Password */}
             <div>
               <label className="block text-gray-600 mb-1 font-medium">
                 Current Password
@@ -129,6 +132,22 @@ export default function AdminChangePassword() {
               />
             </div>
 
+            {/* Admin Secret */}
+            <div>
+              <label className="block text-gray-600 mb-1 font-medium">
+                Admin Secret
+              </label>
+              <input
+                type="password"
+                name="admin_secret"
+                value={form.admin_secret}
+                onChange={handleChange}
+                className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
+                required
+              />
+            </div>
+
+            {/* New Password */}
             <div>
               <label className="block text-gray-600 mb-1 font-medium">
                 New Password
@@ -143,6 +162,7 @@ export default function AdminChangePassword() {
               />
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label className="block text-gray-600 mb-1 font-medium">
                 Confirm New Password
