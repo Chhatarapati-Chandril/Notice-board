@@ -3,7 +3,7 @@ import ApiError from "../utils/ApiError.js";
 
 // Shared key generator (IP + identifier)
 const passwordRateLimitKey = (req, res) => {
-  const ip = ipKeyGenerator(req, res);
+  const ip = String(ipKeyGenerator(req, res));
 
   let identifier = null;
 

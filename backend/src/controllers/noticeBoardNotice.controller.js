@@ -11,11 +11,11 @@ import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   AUDIENCES,
-  AUDIENCE_VALUES
+  AUDIENCE_VALUES,
 } from "../constants.js";
 
 export const getNotices = asyncHandler(async (req, res) => {
-  const { search, categoryId, date, from, to } = req.query;
+  const { search, categoryId, date, from, to, tab = "recent" } = req.query;
 
   const page = Math.max(
     Number(req.query.page) || MIN_PAGE_NUMBER,
@@ -36,6 +36,16 @@ export const getNotices = asyncHandler(async (req, res) => {
     AND n.audience IN (${placeholders})
   `;
   const params = [...allowedAudiences];
+
+  // Notice age filter (apply only when no explicit date filter is used)
+  if (!date && !from && !to) {
+    if (tab === "old") {
+      where += " AND n.created_at < NOW() - INTERVAL 30 DAY";
+    } else {
+      // default: recent
+      where += " AND n.created_at >= NOW() - INTERVAL 30 DAY";
+    }
+  }
 
   if (search) {
     where += " AND n.title LIKE ?";
@@ -192,10 +202,10 @@ export const updateNotice = asyncHandler(async (req, res) => {
   const { title, content, categoryId, audience } = req.body;
 
   if (
-  title === undefined &&
-  content === undefined &&
-  categoryId === undefined &&
-  audience === undefined
+    title === undefined &&
+    content === undefined &&
+    categoryId === undefined &&
+    audience === undefined
   ) {
     throw new ApiError(400, "Nothing to update");
   }
@@ -235,15 +245,8 @@ export const updateNotice = asyncHandler(async (req, res) => {
       audience = COALESCE(?, audience)
     WHERE id = ?
     `,
-    [
-      title ?? null,
-      content ?? null,
-      parsedCategoryId,
-      audience ?? null,
-      id,
-    ]
+    [title ?? null, content ?? null, parsedCategoryId, audience ?? null, id],
   );
-
 
   return res
     .status(200)
