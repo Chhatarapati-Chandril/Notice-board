@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaBell,
   FaBookmark,
   FaUsers,
   FaBuilding,
   FaChevronDown,
+  FaHistory,
 } from "react-icons/fa";
 
 function NoticeSidebar({ selected, setSelected, options }) {
@@ -27,13 +29,26 @@ function NoticeSidebar({ selected, setSelected, options }) {
         Notices
       </h2>
 
-      {/* ALL / BOOKMARKS */}
+      {/* ALL / BOOKMARKS / OLD */}
       {options
-        .filter((o) => o.id === null || o.id === "BOOKMARKS")
+        .filter(
+          (o) =>
+            o.id === null ||
+            o.id === "BOOKMARKS" ||
+            o.id === "OLD"
+        )
         .map((option) => (
           <SidebarItem
             key={option.id ?? option.name}
-            icon={option.id === "BOOKMARKS" ? <FaBookmark /> : <FaBell />}
+            icon={
+              option.id === "BOOKMARKS" ? (
+                <FaBookmark />
+              ) : option.id === "OLD" ? (
+                <FaHistory />
+              ) : (
+                <FaBell />
+              )
+            }
             option={option}
             selected={selected}
             setSelected={setSelected}
@@ -70,7 +85,12 @@ function NoticeSidebar({ selected, setSelected, options }) {
         {open.categories && (
           <div className="ml-2 mt-2 space-y-1 text-sm">
             {options
-              .filter((o) => o.id && o.id !== "BOOKMARKS")
+              .filter(
+                (o) =>
+                  o.id &&
+                  o.id !== "BOOKMARKS" &&
+                  o.id !== "OLD"
+              )
               .map((option) => (
                 <SidebarItem
                   key={option.id}
@@ -92,11 +112,20 @@ export default NoticeSidebar;
 /* ---------------- Sidebar Item ---------------- */
 
 function SidebarItem({ icon, option, selected, setSelected }) {
+  const navigate = useNavigate();
   const active = selected?.id === option.id;
 
   return (
     <div
-      onClick={() => setSelected(option)}
+      onClick={() => {
+        setSelected(option);
+
+        if (option.id === "OLD") {
+          navigate("/noticeboard?tab=old");
+        } else {
+          navigate("/noticeboard");
+        }
+      }}
       className={`
         flex items-center gap-3
         px-3 py-2 rounded-lg

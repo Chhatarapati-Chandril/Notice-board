@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import HomeNav from "../components/HomeNav";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import api from "../redux/api";
-import { loginSuccess } from "../redux/authslice";
 
 export default function AdminChangePassword() {
   const { role } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     curr_password: "",
@@ -34,21 +34,24 @@ export default function AdminChangePassword() {
 
     // ✅ Frontend validations
     if (!curr_password || !admin_secret || !new_password || !confirm_password) {
-      return alert("All fields are required");
+      alert("All fields are required");
+      return;
     }
 
     if (new_password !== confirm_password) {
-      return alert("New password and confirm password do not match");
+      alert("New password and confirm password do not match");
+      return;
     }
 
     if (curr_password === new_password) {
-      return alert("New password must be different from current password");
+      alert("New password must be different from current password");
+      return;
     }
 
     setLoading(true);
 
     try {
-      const res = await api.post(
+      const res = await api.patch(
         "/auth/admin/change-password",
         {
           curr_password,
@@ -58,32 +61,26 @@ export default function AdminChangePassword() {
         { withCredentials: true }
       );
 
-      alert(res.data.message);
+      alert(res.data.message || "Password changed successfully");
 
-      // ✅ Rotate token after password change
-      if (res.data?.data?.accessToken) {
-        dispatch(
-          loginSuccess({
-            token: res.data.data.accessToken,
-            role: "ADMIN",
-            userIdentifier: "Admin",
-          })
-        );
-      }
-
+      // ✅ Reset form
       setForm({
         curr_password: "",
         admin_secret: "",
         new_password: "",
         confirm_password: "",
       });
+
+      // ✅ Redirect admin to home after success
+      navigate("/home", { replace: true });
+
     } catch (err) {
       if (err.response?.status === 401) {
         alert("Current password or admin secret is incorrect");
       } else if (err.response?.status === 400) {
-        alert("New password must be different from current password");
+        alert(err.response.data.message || "Invalid password");
       } else {
-        alert(err.response?.data?.message || "Failed to change password");
+        alert("Failed to change password. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -128,7 +125,6 @@ export default function AdminChangePassword() {
                 value={form.curr_password}
                 onChange={handleChange}
                 className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
-                required
               />
             </div>
 
@@ -143,7 +139,6 @@ export default function AdminChangePassword() {
                 value={form.admin_secret}
                 onChange={handleChange}
                 className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
-                required
               />
             </div>
 
@@ -158,7 +153,6 @@ export default function AdminChangePassword() {
                 value={form.new_password}
                 onChange={handleChange}
                 className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
-                required
               />
             </div>
 
@@ -173,7 +167,6 @@ export default function AdminChangePassword() {
                 value={form.confirm_password}
                 onChange={handleChange}
                 className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
-                required
               />
             </div>
 

@@ -25,6 +25,8 @@ export default function ProfileMenu() {
 
   // ✅ Logout handler
  const handleLogout = async () => {
+  const currentRole = role;
+
   try {
     await api.post("/auth/logout", {}, { withCredentials: true });
   } catch (err) {
@@ -32,14 +34,14 @@ export default function ProfileMenu() {
   } finally {
     dispatch(logout());
 
-    // ✅ Role-based redirect
-    if (role === "ADMIN") {
-      navigate("/admin/login", { replace: true });
+    if (currentRole === "ADMIN") {
+      window.location.href = "/admin/login";
     } else {
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
     }
   }
 };
+
 
   return (
     <div className="relative" ref={menuRef}>

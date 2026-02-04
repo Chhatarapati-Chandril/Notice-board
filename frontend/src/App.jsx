@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 
-import { loginSuccess, authChecked, logout } from "./redux/authslice";
+import { loginSuccess, authChecked} from "./redux/authslice";
 
 import Login from "./pages/login";
 import AdminLogin from "./pages/AdminLogin";
@@ -12,6 +12,7 @@ import NoticeBoard from "./pages/NoticeBoard";
 import PostNotice from "./pages/PostNotice";
 import Unauthorized from "./pages/Unauthorized";
 import AdminChangePassword from "./pages/AdminChangePassword";
+import UpdateNotice from "./pages/UpdateNotice";
 
 const isTokenExpired = (token) => {
   try {
@@ -38,7 +39,6 @@ function App() {
       if (parsed.token && !isTokenExpired(parsed.token)) {
         dispatch(loginSuccess(parsed));
       } else {
-        dispatch(logout());
         dispatch(authChecked());
       }
     } else {
@@ -58,15 +58,9 @@ function App() {
     <Routes>
       {/* ROOT */}
       <Route
-        path="/"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/home" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+  path="/"
+  element={<Navigate to="/login" replace />}
+/>
 
       {/* USER LOGIN */}
       <Route
@@ -78,13 +72,9 @@ function App() {
 
       {/* ADMIN LOGIN */}
       <Route
-        path="/admin/login"
-        element={
-          isAuthenticated && role === "ADMIN"
-            ? <Navigate to="/home" replace />
-            : <AdminLogin />
-        }
-      />
+  path="/admin/login"
+  element={<AdminLogin />}
+/>
 
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
@@ -109,6 +99,16 @@ function App() {
           role === "ADMIN" ? <PostNotice /> : <Navigate to="/unauthorized" replace />
         }
       />
+
+      <Route
+  path="/noticeboard/edit/:id"
+  element={
+    role === "ADMIN"
+      ? <UpdateNotice />
+      : <Navigate to="/unauthorized" replace />
+  }
+/>
+
 
       {/* ADMIN CHANGE PASSWORD */}
       <Route

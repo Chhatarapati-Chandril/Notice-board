@@ -2,13 +2,10 @@ import React, { useEffect, useState, useCallback } from "react";
 import HomeNav from "../components/HomeNav";
 import NoticeSidebar from "../components/NoticeSidebar";
 import axios from "../redux/api";
+import { FaEdit } from "react-icons/fa";
+import { useSearchParams } from "react-router-dom";
 import { getCategoryBadgeClass } from "../constants/categoryColors";
-import {
-  FaBookmark,
-  FaRegBookmark,
-  FaSearch,
-  FaTrash,
-} from "react-icons/fa";
+import { FaBookmark, FaRegBookmark, FaSearch, FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import FloatingButton from "../components/FloatingButton";
@@ -18,6 +15,7 @@ function NoticeBoard() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotice, setSelectedNotice] = useState(null);
+  const [allNotices, setAllNotices] = useState([]);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -55,32 +53,43 @@ function NoticeBoard() {
       .catch(console.error);
   }, []);
 
-  const fetchNotices = useCallback(
-    async (page = 1) => {
-      setLoading(true);
-      try {
-        const params = { page, limit };
-        if (searchTerm) params.search = searchTerm;
-        if (selectedDate) params.date = selectedDate;
-        if (selected.id && selected.id !== "BOOKMARKS") {
-          params.categoryId = selected.id;
-        }
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "recent";
 
+  const fetchNotices = useCallback(
+  async (page = 1) => {
+    setLoading(true);
+    try {
+      const params = { page, limit, tab };
+
+      if (searchTerm) params.search = searchTerm;
+      if (selectedDate) params.date = selectedDate;
+      if (selected.id && selected.id !== "BOOKMARKS") {
+        params.categoryId = selected.id;
+      }
+
+      // 🚨 BOOKMARK MODE: fetch ALL
+      if (selected.id === "BOOKMARKS") {
+        const res = await axios.get("/noticeboard/notices", {
+          params: { limit: 10000 }, // or a high safe number
+          withCredentials: true,
+        });
+        setAllNotices(res.data.data.items);
+      } else {
         const res = await axios.get("/noticeboard/notices", {
           params,
           withCredentials: true,
         });
-
         setNotices(res.data.data.items);
         setPagination(res.data.data.pagination);
-      } catch {
-        setNotices([]);
-      } finally {
-        setLoading(false);
       }
-    },
-    [searchTerm, selectedDate, selected.id, limit]
-  );
+    } finally {
+      setLoading(false);
+    }
+  },
+  [searchTerm, selectedDate, selected.id, limit, tab],
+);
+
 
   useEffect(() => {
     const t = setTimeout(() => fetchNotices(1), 300);
@@ -93,16 +102,15 @@ function NoticeBoard() {
 
   const toggleBookmark = (id) => {
     setBookmarkedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
   const handleNoticeClick = async (notice) => {
     try {
-      const res = await axios.get(
-        `/noticeboard/notices/${notice.id}`,
-        { withCredentials: true }
-      );
+      const res = await axios.get(`/noticeboard/notices/${notice.id}`, {
+        withCredentials: true,
+      });
       setSelectedNotice(res.data.data);
     } catch {
       alert("Failed to load notice details");
@@ -128,12 +136,37 @@ function NoticeBoard() {
     }
   };
 
-  const displayNotices =
-    selected.id === "BOOKMARKS"
-      ? notices.filter((n) => bookmarkedIds.includes(n.id))
-      : notices;
 
   const formatDate = (d) => new Date(d).toLocaleDateString("en-GB");
+
+  const bookmarkedNotices = allNotices.filter((n) =>
+  bookmarkedIds.includes(n.id),
+);
+
+const bookmarkStartIndex = (pagination.page - 1) * limit;
+const bookmarkEndIndex = bookmarkStartIndex + limit;
+
+const paginatedBookmarks = bookmarkedNotices.slice(
+  bookmarkStartIndex,
+  bookmarkEndIndex,
+);
+
+  const displayNotices =
+  selected.id === "BOOKMARKS" ? paginatedBookmarks : notices;
+
+ useEffect(() => {
+    if (selected.id === "BOOKMARKS") {
+      setPagination((prev) => ({
+        ...prev,
+        page: 1,
+        totalPages: Math.max(
+          1,
+          Math.ceil(bookmarkedNotices.length / limit),
+        ),
+      }));
+    }
+  }, [selected.id, bookmarkedNotices.length, limit]);
+
 
   return (
     <>
@@ -146,6 +179,7 @@ function NoticeBoard() {
           options={[
             { name: "All Notices", id: null },
             { name: "Bookmarks", id: "BOOKMARKS" },
+            { name: "Old Notices", id: "OLD" },
             ...categories.map((c) => ({ name: c.name, id: c.id })),
           ]}
         />
@@ -195,15 +229,15 @@ function NoticeBoard() {
             </div>
 
             {/* Table */}
-            <table className="w-full border text-sm">
+            <table className="w-full border border-black border-collapse text-sm">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="border px-4 py-3">☆</th>
-                  <th className="border px-4 py-3">Category</th>
-                  <th className="border px-4 py-3">Notice</th>
-                  <th className="border px-4 py-3">Date</th>
+                  <th className="border border-black px-4 py-3"></th>
+                  <th className="border border-black px-4 py-3">Category</th>
+                  <th className="border border-black px-4 py-3">Notice</th>
+                  <th className="border border-black px-4 py-3">Date</th>
                   {role === "ADMIN" && (
-                    <th className="border px-4 py-3">🗑️</th>
+                    <th className="border border-black px-4 py-3"></th>
                   )}
                 </tr>
               </thead>
@@ -223,41 +257,57 @@ function NoticeBoard() {
                       className="cursor-pointer hover:bg-gray-50"
                     >
                       <td
-                        className="border px-4 py-3 text-center"
+                        className="border border-black px-4 py-3"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleBookmark(n.id);
                         }}
                       >
-                        {bookmarkedIds.includes(n.id) ? (
-                          <FaBookmark className="text-blue-500" />
-                        ) : (
-                          <FaRegBookmark className="text-gray-400" />
-                        )}
+                        <div className="flex items-center justify-center">
+                          {bookmarkedIds.includes(n.id) ? (
+                            <FaBookmark className="text-blue-500" />
+                          ) : (
+                            <FaRegBookmark className="text-gray-400" />
+                          )}
+                        </div>
                       </td>
 
-                      <td className="border px-4 py-3">
+                      <td className="border border-black px-4 py-3">
                         <span
                           className={`px-2 py-1 rounded text-xs ${getCategoryBadgeClass(
-                            n.category
+                            n.category,
                           )}`}
                         >
                           {n.category}
                         </span>
                       </td>
 
-                      <td className="border px-4 py-3">{n.title}</td>
+                      <td className="border border-black px-4 py-3">
+                        {n.title}
+                      </td>
 
-                      <td className="border px-4 py-3 text-center">
+                      <td className="border border-black px-4 py-3">
                         {formatDate(n.created_at)}
                       </td>
 
                       {role === "ADMIN" && (
-                        <td
-                          className="border px-4 py-3 text-center text-red-500 hover:text-red-700"
-                          onClick={(e) => handleDeleteNotice(e, n.id)}
-                        >
-                          <FaTrash />
+                        <td className="border border-black px-4 py-3">
+                          <div className="flex items-center justify-center gap-4">
+                            {/* EDIT */}
+                            <FaEdit
+                              className="text-green-600 hover:text-green-800 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/noticeboard/edit/${n.id}`);
+                              }}
+                            />
+
+                            {/* DELETE */}
+                            <FaTrash
+                              className="text-red-500 hover:text-red-700 cursor-pointer"
+                              onClick={(e) => handleDeleteNotice(e, n.id)}
+                            />
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -269,25 +319,33 @@ function NoticeBoard() {
             {/* Pagination */}
             <div className="flex justify-between items-center mt-6">
               <button
-                disabled={pagination.page === 1}
-                onClick={() => fetchNotices(pagination.page - 1)}
-                className="px-4 py-2 border rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
+  disabled={pagination.page === 1}
+  onClick={() =>
+    selected.id === "BOOKMARKS"
+      ? setPagination((p) => ({ ...p, page: p.page - 1 }))
+      : fetchNotices(pagination.page - 1)
+  }
+  className="px-4 py-2 border rounded disabled:opacity-50"
+>
+  Previous
+</button>
 
               <span className="text-sm">
                 Page <strong>{pagination.page}</strong> of{" "}
                 <strong>{pagination.totalPages}</strong>
               </span>
 
-              <button
-                disabled={pagination.page === pagination.totalPages}
-                onClick={() => fetchNotices(pagination.page + 1)}
-                className="px-4 py-2 border rounded disabled:opacity-50"
-              >
-                Next
-              </button>
+            <button
+  disabled={pagination.page === pagination.totalPages}
+  onClick={() =>
+    selected.id === "BOOKMARKS"
+      ? setPagination((p) => ({ ...p, page: p.page + 1 }))
+      : fetchNotices(pagination.page + 1)
+  }
+  className="px-4 py-2 border rounded disabled:opacity-50"
+>
+  Next
+</button>
             </div>
           </div>
         </div>
@@ -296,99 +354,95 @@ function NoticeBoard() {
       {isAuthenticated && role === "ADMIN" && (
         <FloatingButton onClick={handlePostClick} />
       )}
-    </>
-  );
-}
 
       {/* NOTICE MODAL */}
-      {selectedNotice && (() => {
-        const attachments = Array.isArray(selectedNotice.files)
-          ? selectedNotice.files
-          : Array.isArray(selectedNotice.attachments)
-          ? selectedNotice.attachments
-          : [];
+      {selectedNotice &&
+        (() => {
+          const attachments = Array.isArray(selectedNotice.files)
+            ? selectedNotice.files
+            : Array.isArray(selectedNotice.attachments)
+              ? selectedNotice.attachments
+              : [];
 
-        return (
-          <div
-            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-            onClick={() => setSelectedNotice(null)}
-          >
+          return (
             <div
-              className="bg-white w-162.5 max-h-[85vh] overflow-y-auto rounded-xl p-6 relative"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+              onClick={() => setSelectedNotice(null)}
             >
-              <button
-                className="absolute top-3 right-4 text-xl"
-                onClick={() => setSelectedNotice(null)}
+              <div
+                className="bg-white w-162.5 max-h-[85vh] overflow-y-auto rounded-xl p-6 relative"
+                onClick={(e) => e.stopPropagation()}
               >
-                ✕
-              </button>
+                <button
+                  className="absolute top-3 right-4 text-xl"
+                  onClick={() => setSelectedNotice(null)}
+                >
+                  ✕
+                </button>
 
-              <h2 className="text-2xl font-semibold mb-1">
-                {selectedNotice.title}
-              </h2>
+                <h2 className="text-2xl font-semibold mb-1">
+                  {selectedNotice.title}
+                </h2>
 
-              <p className="text-sm text-gray-500 mb-4">
-                {formatDate(selectedNotice.created_at)}
-              </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  {formatDate(selectedNotice.created_at)}
+                </p>
 
-              <div className="whitespace-pre-line mb-6 text-gray-800">
-                {selectedNotice.content}
-              </div>
-
-              {attachments.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-3 text-lg">Attachments</h3>
-                  <ul className="space-y-2">
-                    {attachments.map((file, index) => {
-                      const fileName =
-                        file.original_name ||
-                        file.originalName ||
-                        file.name ||
-                        `Attachment ${index + 1}`;
-
-                      const fileUrl =
-                        file.file_url ||
-                        file.fileUrl ||
-                        file.url;
-
-                      if (!fileUrl) return null;
-
-                      return (
-                        <li
-                          key={file.id || index}
-                          className="border rounded-lg p-3 flex justify-between items-center"
-                        >
-                          <span className="truncate max-w-[70%]">
-                            {fileName}
-                          </span>
-                          <div className="flex gap-4">
-                            <a
-                              href={fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
-                            >
-                              Open
-                            </a>
-                            <a
-                              href={fileUrl}
-                              download
-                              className="text-gray-600 hover:underline"
-                            >
-                              Download
-                            </a>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                <div className="whitespace-pre-line mb-6 text-gray-800">
+                  {selectedNotice.content}
                 </div>
-              )}
+
+                {attachments.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-3 text-lg">Attachments</h3>
+                    <ul className="space-y-2">
+                      {attachments.map((file, index) => {
+                        const fileName =
+                          file.original_name ||
+                          file.originalName ||
+                          file.name ||
+                          `Attachment ${index + 1}`;
+
+                        const fileUrl =
+                          file.file_url || file.fileUrl || file.url;
+
+                        if (!fileUrl) return null;
+
+                        return (
+                          <li
+                            key={file.id || index}
+                            className="border rounded-lg p-3 flex justify-between items-center"
+                          >
+                            <span className="truncate max-w-[70%]">
+                              {fileName}
+                            </span>
+                            <div className="flex gap-4">
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                Open
+                              </a>
+                              <a
+                                href={fileUrl}
+                                download
+                                className="text-gray-600 hover:underline"
+                              >
+                                Download
+                              </a>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
     </>
   );
 }

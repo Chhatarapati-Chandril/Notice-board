@@ -47,6 +47,20 @@ api.interceptors.response.use(
 
     const originalRequest = error.config;
 
+    // 🟢 PUBLIC AUTH ROUTES (do NOT auto-logout / redirect)
+    const publicAuthRoutes = [
+      "/auth/login",
+      "/auth/admin/login",
+      "/auth/forgot-password",
+      "/auth/reset-password",
+    ];
+
+    if (publicAuthRoutes.some((route) =>
+      originalRequest.url.includes(route)
+    )) {
+      return Promise.reject(error);
+    }
+
     // 🚫 Don't retry refresh itself
     if (originalRequest.url.includes("/auth/refresh")) {
       reduxStore.dispatch(logout());
