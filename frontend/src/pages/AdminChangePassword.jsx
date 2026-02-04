@@ -1,8 +1,7 @@
-// src/pages/AdminChangePassword.jsx
 import React, { useState } from "react";
 import HomeNav from "../components/HomeNav";
 import { useSelector, useDispatch } from "react-redux";
-import axios from "../redux/api";
+import api from "../redux/api";
 import { loginSuccess } from "../redux/authslice";
 
 export default function AdminChangePassword() {
@@ -25,33 +24,43 @@ export default function AdminChangePassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.curr_password || !form.new_password || !form.confirm_password) {
+    const { curr_password, new_password, confirm_password } = form;
+
+    // ✅ Frontend validations
+    if (!curr_password || !new_password || !confirm_password) {
       return alert("All fields are required");
     }
 
-    if (form.new_password !== form.confirm_password) {
+    if (new_password !== confirm_password) {
       return alert("New password and confirm password do not match");
+    }
+
+    if (curr_password === new_password) {
+      return alert("New password must be different from current password");
+    }
+
+    const adminSecret = import.meta.env.VITE_ADMIN_SECRET;
+    if (!adminSecret) {
+      return alert("Admin secret is missing. Check .env file.");
     }
 
     setLoading(true);
 
     try {
-      const res = await axios.post(
+      const res = await api.post(
         "/auth/admin/change-password",
         {
-          curr_password: form.curr_password,
-          admin_secret:
-            process.env.REACT_APP_ADMIN_SECRET ||
-            "super-long-random-string-here",
-          new_password: form.new_password,
+          curr_password,
+          admin_secret: adminSecret,
+          new_password,
         },
         { withCredentials: true }
       );
 
-      alert(res.data.message || "Password changed successfully");
+      alert(res.data.message);
 
-      // Update token in Redux
-      if (res.data.data?.accessToken) {
+      // ✅ Rotate token after password change
+      if (res.data?.data?.accessToken) {
         dispatch(
           loginSuccess({
             token: res.data.data.accessToken,
@@ -61,22 +70,33 @@ export default function AdminChangePassword() {
         );
       }
 
-      setForm({ curr_password: "", new_password: "", confirm_password: "" });
+      setForm({
+        curr_password: "",
+        new_password: "",
+        confirm_password: "",
+      });
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to change password");
+      if (err.response?.status === 401) {
+        alert("Current password is incorrect");
+      } else if (err.response?.status === 400) {
+        alert("New password must be different from current password");
+      } else {
+        alert(err.response?.data?.message || "Failed to change password");
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // 🚫 Role guard
   if (role !== "ADMIN") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f3f5f9]">
-        <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 text-center max-w-md">
+        <div className="bg-white p-8 rounded-xl shadow-md text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">
             Access Denied
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600">
             Only Admin users can access this page.
           </p>
         </div>
@@ -89,15 +109,14 @@ export default function AdminChangePassword() {
       <HomeNav title="Admin Change Password" />
 
       <div className="flex justify-center pt-24 pb-12 bg-[#f3f5f9] min-h-screen">
-        <div className="bg-white p-10 rounded-2xl shadow-lg w-full max-w-md border border-gray-200">
+        <div className="bg-white p-10 rounded-2xl shadow-lg w-full max-w-md">
           <h2 className="text-3xl font-bold text-[#1e5aa8] mb-6 text-center">
             Change Password
           </h2>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Current Password */}
-            <div className="flex flex-col">
-              <label className="text-gray-600 mb-2 font-medium">
+            <div>
+              <label className="block text-gray-600 mb-1 font-medium">
                 Current Password
               </label>
               <input
@@ -105,15 +124,13 @@ export default function AdminChangePassword() {
                 name="curr_password"
                 value={form.curr_password}
                 onChange={handleChange}
-                placeholder="Enter current password"
-                className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
                 required
               />
             </div>
 
-            {/* New Password */}
-            <div className="flex flex-col">
-              <label className="text-gray-600 mb-2 font-medium">
+            <div>
+              <label className="block text-gray-600 mb-1 font-medium">
                 New Password
               </label>
               <input
@@ -121,15 +138,13 @@ export default function AdminChangePassword() {
                 name="new_password"
                 value={form.new_password}
                 onChange={handleChange}
-                placeholder="Enter new password"
-                className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
                 required
               />
             </div>
 
-            {/* Confirm Password */}
-            <div className="flex flex-col">
-              <label className="text-gray-600 mb-2 font-medium">
+            <div>
+              <label className="block text-gray-600 mb-1 font-medium">
                 Confirm New Password
               </label>
               <input
@@ -137,17 +152,15 @@ export default function AdminChangePassword() {
                 name="confirm_password"
                 value={form.confirm_password}
                 onChange={handleChange}
-                placeholder="Confirm new password"
-                className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full border px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-200"
                 required
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1e5aa8] text-white px-4 py-3 rounded-lg shadow hover:bg-[#174a8a] disabled:opacity-50 transition-colors duration-200"
+              className="w-full bg-[#1e5aa8] text-white py-3 rounded-lg hover:bg-[#174a8a] disabled:opacity-50"
             >
               {loading ? "Updating…" : "Change Password"}
             </button>

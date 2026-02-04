@@ -12,6 +12,7 @@ function NoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNotice, setSelectedNotice] = useState(null);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -28,7 +29,6 @@ function NoticeBoard() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
-  const [selectedNotice, setSelectedNotice] = useState(null);
 
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
     try {
@@ -91,10 +91,15 @@ function NoticeBoard() {
   };
 
   const handleNoticeClick = async (notice) => {
-    const res = await axios.get(`/noticeboard/notices/${notice.id}`, {
-      withCredentials: true,
-    });
-    setSelectedNotice(res.data.data);
+    try {
+      const res = await axios.get(
+        `/noticeboard/notices/${notice.id}`,
+        { withCredentials: true }
+      );
+      setSelectedNotice(res.data.data);
+    } catch {
+      alert("Failed to load notice details");
+    }
   };
 
   const displayNotices =
@@ -121,24 +126,14 @@ function NoticeBoard() {
 
         <div className="flex-1 p-8 overflow-auto">
           <div className="bg-white rounded-xl p-6 shadow-md">
-            {/* HEADER */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-[#1e5aa8]">
-                {selected.name}
-              </h2>
-              <p className="text-sm text-gray-500">
-                Latest updates and announcements
-              </p>
-            </div>
-
-            {/* FILTERS */}
-            <div className="flex flex-wrap gap-4 mb-6">
+            {/* Filters */}
+            <div className="flex gap-4 mb-6">
               <input
                 type="date"
-                className="border px-3 py-2 rounded-md text-sm"
                 value={selectedDate}
                 max={new Date().toLocaleDateString("en-CA")}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                className="border px-3 py-2 rounded-md text-sm"
               />
 
               <div className="relative w-72">
@@ -153,84 +148,188 @@ function NoticeBoard() {
               </div>
             </div>
 
-            {/* TABLE */}
-            <div className="overflow-x-auto">
-              <table className="w-full border text-sm rounded-lg overflow-hidden">
-                <thead className="bg-gray-100 text-gray-700">
+            {/* Table */}
+            <table className="w-full border text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-4 py-3">☆</th>
+                  <th className="border px-4 py-3">Category</th>
+                  <th className="border px-4 py-3">Notice</th>
+                  <th className="border px-4 py-3">Date</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {loading ? (
                   <tr>
-                    <th className="border px-4 py-3 text-center w-8">☆</th>
-                    <th className="border px-4 py-3 text-left">Category</th>
-                    <th className="border px-4 py-3 text-left">Notice</th>
-                    <th className="border px-4 py-3 text-center">Date</th>
+                    <td colSpan="4" className="py-8 text-center">
+                      Loading…
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan="4" className="py-8 text-center">
-                        Loading…
-                      </td>
-                    </tr>
-                  ) : displayNotices.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="py-8 text-center text-gray-400">
-                        No notices available
-                      </td>
-                    </tr>
-                  ) : (
-                    displayNotices.map((n) => (
-                      <tr
-                        key={n.id}
-                        onClick={() => handleNoticeClick(n)}
-                        className="hover:bg-gray-50 cursor-pointer"
+                ) : (
+                  displayNotices.map((n) => (
+                    <tr
+                      key={n.id}
+                      onClick={() => handleNoticeClick(n)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <td
+                        className="border px-4 py-3 text-center"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBookmark(n.id);
+                        }}
                       >
-                        <td className="border px-4 py-3 text-center">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleBookmark(n.id);
-                            }}
-                          >
-                            {bookmarkedIds.includes(n.id) ? (
-                              <FaBookmark className="text-blue-500" />
-                            ) : (
-                              <FaRegBookmark className="text-gray-400" />
-                            )}
-                          </span>
-                        </td>
+                        {bookmarkedIds.includes(n.id) ? (
+                          <FaBookmark className="text-blue-500" />
+                        ) : (
+                          <FaRegBookmark className="text-gray-400" />
+                        )}
+                      </td>
+                      <td className="border px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${getCategoryBadgeClass(
+                            n.category
+                          )}`}
+                        >
+                          {n.category}
+                        </span>
+                      </td>
+                      <td className="border px-4 py-3">{n.title}</td>
+                      <td className="border px-4 py-3 text-center">
+                        {formatDate(n.created_at)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-                        <td className="border px-4 py-3">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${getCategoryBadgeClass(
-                              n.category
-                            )}`}
-                          >
-                            {n.category}
-                          </span>
-                        </td>
+            {/* ✅ PAGINATION */}
+            <div className="flex justify-between items-center mt-6">
+              <button
+                disabled={pagination.page === 1}
+                onClick={() => fetchNotices(pagination.page - 1)}
+                className="px-4 py-2 border rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
 
-                        <td className="border px-4 py-3 font-medium">
-                          {n.title}
-                        </td>
+              <span className="text-sm">
+                Page <strong>{pagination.page}</strong> of{" "}
+                <strong>{pagination.totalPages}</strong>
+              </span>
 
-                        <td className="border px-4 py-3 text-center text-gray-500">
-                          {formatDate(n.created_at)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <button
+                disabled={pagination.page === pagination.totalPages}
+                onClick={() => fetchNotices(pagination.page + 1)}
+                className="px-4 py-2 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ ONLY ADMIN CAN SEE + BUTTON */}
       {isAuthenticated && role === "ADMIN" && (
         <FloatingButton onClick={handlePostClick} />
       )}
+
+      {/* NOTICE MODAL */}
+      {selectedNotice && (() => {
+      const attachments = Array.isArray(selectedNotice.files)
+  ? selectedNotice.files
+  : Array.isArray(selectedNotice.attachments)
+  ? selectedNotice.attachments
+  : [];
+
+        return (
+          <div
+            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+            onClick={() => setSelectedNotice(null)}
+          >
+            <div
+              className="bg-white w-162.5 max-h-[85vh] overflow-y-auto rounded-xl p-6 relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-3 right-4 text-xl"
+                onClick={() => setSelectedNotice(null)}
+              >
+                ✕
+              </button>
+
+              <h2 className="text-2xl font-semibold mb-1">
+                {selectedNotice.title}
+              </h2>
+
+              <p className="text-sm text-gray-500 mb-4">
+                {formatDate(selectedNotice.created_at)}
+              </p>
+
+              <div className="whitespace-pre-line mb-6 text-gray-800">
+                {selectedNotice.content}
+              </div>
+
+              {attachments.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-3 text-lg">
+                    Attachments
+                  </h3>
+
+                  <ul className="space-y-2">
+                    {attachments.map((file, index) => {
+                      const fileName =
+                        file.original_name ||
+                        file.originalName ||
+                        file.name ||
+                        `Attachment ${index + 1}`;
+
+                      const fileUrl =
+                        file.file_url ||
+                        file.fileUrl ||
+                        file.url;
+
+                      if (!fileUrl) return null;
+
+                      return (
+                        <li
+                          key={file.id || index}
+                          className="border rounded-lg p-3 flex justify-between items-center"
+                        >
+                          <span className="truncate max-w-[70%]">
+                            {fileName}
+                          </span>
+
+                          <div className="flex gap-4">
+                            <a
+                              href={fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Open
+                            </a>
+
+                            <a
+                              href={fileUrl}
+                              download
+                              className="text-gray-600 hover:underline"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
