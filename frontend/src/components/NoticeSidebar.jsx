@@ -13,21 +13,24 @@ function NoticeSidebar({ selected, setSelected, options }) {
   const [open, setOpen] = useState({ categories: true });
 
   return (
-    <div
-      className="
-        w-64 bg-white
-        shadow-[0_10px_30px_rgba(30,90,168,0.15)]
-        rounded-lg
-        p-5 flex flex-col gap-4
-        h-[calc(100vh-80px)]
-        sticky top-28
-        overflow-y-auto
-      "
-    >
+  <div
+  className="
+    w-14 sm:w-20 md:w-64
+    bg-white
+    shadow-[0_10px_30px_rgba(30,90,168,0.15)]
+    rounded-lg
+    p-2 md:p-4
+    flex flex-col
+    gap-1
+    h-[calc(100vh-80px)]
+    sticky top-20
+    overflow-y-auto
+  "
+>
       {/* TITLE */}
-      <h2 className="text-2xl font-bold text-[#0f2a44] mb-2">
-        Notices
-      </h2>
+      <h2 className="hidden md:block text-2xl font-bold text-[#0f2a44] mb-2">
+  Notices
+</h2>
 
       {/* ALL / BOOKMARKS / OLD */}
       {options
@@ -70,10 +73,10 @@ function NoticeSidebar({ selected, setSelected, options }) {
             shadow-sm
           "
         >
-          <div className="flex items-center gap-3">
-            <FaBuilding />
-            Categories
-          </div>
+          <div className="flex items-center justify-center md:justify-start gap-0 md:gap-3">
+  <FaBuilding />
+  <span className="hidden md:inline">Categories</span>
+</div>
           <FaChevronDown
             size={12}
             className={`transition-transform ${
@@ -83,7 +86,7 @@ function NoticeSidebar({ selected, setSelected, options }) {
         </div>
 
         {open.categories && (
-          <div className="ml-2 mt-2 space-y-1 text-sm">
+          <div className="mt-1 pl-3 md:pl-6 space-y-1 text-sm">
             {options
               .filter(
                 (o) =>
@@ -116,29 +119,35 @@ function SidebarItem({ icon, option, selected, setSelected }) {
   const active = selected?.id === option.id;
 
   return (
-    <div
-      onClick={() => {
-        setSelected(option);
+   <div
+  onClick={() => {
+    setSelected(option);
+    option.id === "OLD"
+      ? navigate("/noticeboard?tab=old")
+      : navigate("/noticeboard");
+  }}
+  className={`
+    flex items-center
+    justify-center md:justify-start
+    h-10
+    px-2 md:px-3
+    rounded-lg
+    cursor-pointer
+    transition-all
+    ${
+      active
+        ? "bg-[#eef3fb] text-[#1e5aa8] font-semibold"
+        : "text-[#0f2a44] hover:bg-[#f3f6fb]"
+    }
+  `}
+>
+  <span className="flex items-center justify-center w-6">
+    {icon}
+  </span>
 
-        if (option.id === "OLD") {
-          navigate("/noticeboard?tab=old");
-        } else {
-          navigate("/noticeboard");
-        }
-      }}
-      className={`
-        flex items-center gap-3
-        px-3 py-2 rounded-lg
-        cursor-pointer transition-all
-        ${
-          active
-            ? "bg-[#eef3fb] text-[#1e5aa8] font-semibold shadow-sm"
-            : "text-[#0f2a44] hover:bg-[#f3f6fb]"
-        }
-      `}
-    >
-      {icon}
-      {option.name}
-    </div>
+  <span className="hidden md:inline ml-3 truncate">
+    {option.name}
+  </span>
+</div>
   );
 }

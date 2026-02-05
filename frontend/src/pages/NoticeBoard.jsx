@@ -172,22 +172,22 @@ const paginatedBookmarks = bookmarkedNotices.slice(
     <>
       <HomeNav title="Notice Board" />
 
-      <div className="flex min-h-screen bg-[#f3f5f9] pt-20">
-        <NoticeSidebar
-          selected={selected}
-          setSelected={setSelected}
-          options={[
-            { name: "All Notices", id: null },
-            { name: "Bookmarks", id: "BOOKMARKS" },
-            { name: "Old Notices", id: "OLD" },
-            ...categories.map((c) => ({ name: c.name, id: c.id })),
-          ]}
-        />
+      <div className="flex min-h-screen bg-[#f3f5f9] pt-20 gap-4 px-2 md:px-6">
+  <NoticeSidebar
+    selected={selected}
+    setSelected={setSelected}
+    options={[
+      { name: "All Notices", id: null },
+      { name: "Bookmarks", id: "BOOKMARKS" },
+      { name: "Old Notices", id: "OLD" },
+      ...categories.map((c) => ({ name: c.name, id: c.id })),
+    ]}
+  />
 
-        <div className="flex-1 p-8 overflow-auto">
+        <div className="flex-1 p-3 md:p-6 overflow-auto">
           <div className="bg-white rounded-xl p-6 shadow-md">
             {/* Filters */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
               <div className="flex gap-4">
                 <input
                   type="date"
@@ -229,92 +229,92 @@ const paginatedBookmarks = bookmarkedNotices.slice(
             </div>
 
             {/* Table */}
-            <table className="w-full border border-black border-collapse text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border border-black px-4 py-3"></th>
-                  <th className="border border-black px-4 py-3">Category</th>
-                  <th className="border border-black px-4 py-3">Notice</th>
-                  <th className="border border-black px-4 py-3">Date</th>
-                  {role === "ADMIN" && (
-                    <th className="border border-black px-4 py-3"></th>
-                  )}
-                </tr>
-              </thead>
+            <div className="overflow-x-auto">
+  <table className="min-w-175 w-full border border-black border-collapse text-sm">
+    <thead className="bg-gray-100">
+      <tr>
+        <th className="border border-black px-4 py-3"></th>
+        <th className="border border-black px-4 py-3">Category</th>
+        <th className="border border-black px-4 py-3">Notice</th>
+        <th className="border border-black px-4 py-3">Date</th>
+        {role === "ADMIN" && (
+          <th className="border border-black px-4 py-3"></th>
+        )}
+      </tr>
+    </thead>
 
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center">
-                      Loading…
-                    </td>
-                  </tr>
+    <tbody>
+      {loading ? (
+        <tr>
+          <td colSpan="5" className="py-8 text-center">
+            Loading…
+          </td>
+        </tr>
+      ) : (
+        displayNotices.map((n) => (
+          <tr
+            key={n.id}
+            onClick={() => handleNoticeClick(n)}
+            className="cursor-pointer hover:bg-gray-50"
+          >
+            <td
+              className="border border-black px-4 py-3"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBookmark(n.id);
+              }}
+            >
+              <div className="flex items-center justify-center">
+                {bookmarkedIds.includes(n.id) ? (
+                  <FaBookmark className="text-blue-500" />
                 ) : (
-                  displayNotices.map((n) => (
-                    <tr
-                      key={n.id}
-                      onClick={() => handleNoticeClick(n)}
-                      className="cursor-pointer hover:bg-gray-50"
-                    >
-                      <td
-                        className="border border-black px-4 py-3"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleBookmark(n.id);
-                        }}
-                      >
-                        <div className="flex items-center justify-center">
-                          {bookmarkedIds.includes(n.id) ? (
-                            <FaBookmark className="text-blue-500" />
-                          ) : (
-                            <FaRegBookmark className="text-gray-400" />
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="border border-black px-4 py-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${getCategoryBadgeClass(
-                            n.category,
-                          )}`}
-                        >
-                          {n.category}
-                        </span>
-                      </td>
-
-                      <td className="border border-black px-4 py-3">
-                        {n.title}
-                      </td>
-
-                      <td className="border border-black px-4 py-3">
-                        {formatDate(n.created_at)}
-                      </td>
-
-                      {role === "ADMIN" && (
-                        <td className="border border-black px-4 py-3">
-                          <div className="flex items-center justify-center gap-4">
-                            {/* EDIT */}
-                            <FaEdit
-                              className="text-green-600 hover:text-green-800 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/noticeboard/edit/${n.id}`);
-                              }}
-                            />
-
-                            {/* DELETE */}
-                            <FaTrash
-                              className="text-red-500 hover:text-red-700 cursor-pointer"
-                              onClick={(e) => handleDeleteNotice(e, n.id)}
-                            />
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))
+                  <FaRegBookmark className="text-gray-400" />
                 )}
-              </tbody>
-            </table>
+              </div>
+            </td>
+
+            <td className="border border-black px-4 py-3">
+              <span
+                className={`px-2 py-1 rounded text-xs ${getCategoryBadgeClass(
+                  n.category
+                )}`}
+              >
+                {n.category}
+              </span>
+            </td>
+
+            <td className="border border-black px-4 py-3">
+              {n.title}
+            </td>
+
+            <td className="border border-black px-4 py-3">
+              {formatDate(n.created_at)}
+            </td>
+
+            {role === "ADMIN" && (
+              <td className="border border-black px-4 py-3">
+                <div className="flex items-center justify-center gap-4">
+                  <FaEdit
+                    className="text-green-600 hover:text-green-800 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/noticeboard/edit/${n.id}`);
+                    }}
+                  />
+                  <FaTrash
+                    className="text-red-500 hover:text-red-700 cursor-pointer"
+                    onClick={(e) => handleDeleteNotice(e, n.id)}
+                  />
+                </div>
+              </td>
+            )}
+          </tr>
+        ))
+      )}
+    </tbody>
+  </table>
+</div>
+
 
             {/* Pagination */}
             <div className="flex justify-between items-center mt-6">
