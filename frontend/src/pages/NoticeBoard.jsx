@@ -68,6 +68,10 @@ function NoticeBoard() {
         params.categoryId = selected.id;
       }
 
+      if (role === "GUEST") {
+  params.audience = "PUBLIC";
+}
+
       // 🚨 BOOKMARK MODE: fetch ALL
       if (selected.id === "BOOKMARKS") {
         const res = await axios.get("/noticeboard/notices", {

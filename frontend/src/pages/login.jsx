@@ -57,9 +57,15 @@ export default function Login() {
   };
 
   const handleGuestLogin = () => {
-    localStorage.setItem("auth", JSON.stringify({ role: "GUEST" }));
-    navigate("/home");
+  const authData = {
+    role: "GUEST",
+    isAuthenticated: true,
   };
+
+  localStorage.setItem("auth", JSON.stringify(authData));
+  dispatch(loginSuccess(authData));
+  navigate("/home");
+};
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#f3f5f9] to-[#e9edf5]">
