@@ -71,38 +71,49 @@ function PostNotice() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return;
+  e.preventDefault();
+  if (loading) return;
 
-    if (!form.title.trim()) return alert("Title is required");
-    if (!form.categoryId) return alert("Category is required");
-    if (!form.content.trim()) return alert("Content is required");
+  if (!form.title.trim()) return alert("Title is required");
+  if (!form.categoryId) return alert("Category is required");
 
-    setLoading(true);
+  const hasContent = form.content && form.content.trim() !== "";
+  const hasFiles = form.files && form.files.length > 0;
 
-    try {
-      const formData = new FormData();
-      formData.append("title", form.title.trim());
+  if (!hasContent && !hasFiles) {
+    return alert("Add content or at least one attachment");
+  }
+
+  setLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("title", form.title.trim());
+    formData.append("categoryId", form.categoryId);
+    formData.append("audience", form.audience);
+
+    if (hasContent) {
       formData.append("content", form.content.trim());
-      formData.append("categoryId", form.categoryId);
-      formData.append("audience", form.audience); // ✅ send audience
-      form.files.forEach((f) => formData.append("files", f));
-
-      const res = await axios.post("/noticeboard/notices", formData, {
-        withCredentials: true,
-      });
-
-      alert(res.data.message || "Notice posted successfully");
-      navigate("/noticeboard", { replace: true });
-    } catch (err) {
-      alert(
-        err.response?.data?.message ||
-          "Failed to post notice. Admin access required."
-      );
-    } finally {
-      setLoading(false);
     }
-  };
+
+    form.files.forEach((f) => formData.append("files", f));
+
+    const res = await axios.post("/noticeboard/notices", formData, {
+      withCredentials: true,
+    });
+
+    alert(res.data.message || "Notice posted successfully");
+    navigate("/noticeboard", { replace: true });
+  } catch (err) {
+    alert(
+      err.response?.data?.message ||
+        "Failed to post notice. Admin access required."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <>
@@ -187,7 +198,6 @@ function PostNotice() {
                   px-4 py-2 rounded-lg
                   focus:outline-none focus:ring-2 focus:ring-blue-200
                 "
-                required
               />
 
               {/* FILES */}
