@@ -9,6 +9,35 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import FloatingButton from "../components/FloatingButton";
 
+const CATEGORY_BADGE_CLASSES = {
+  RED: "bg-red-100 text-red-700",
+  ORANGE: "bg-orange-100 text-orange-700",
+  AMBER: "bg-amber-100 text-amber-700",
+  YELLOW: "bg-yellow-100 text-yellow-700",
+
+  LIME: "bg-lime-100 text-lime-700",
+  GREEN: "bg-green-100 text-green-700",
+  EMERALD: "bg-emerald-100 text-emerald-700",
+  TEAL: "bg-teal-100 text-teal-700",
+
+  CYAN: "bg-cyan-100 text-cyan-700",
+  SKY: "bg-sky-100 text-sky-700",
+  BLUE: "bg-blue-100 text-blue-700",
+  INDIGO: "bg-indigo-100 text-indigo-700",
+
+  VIOLET: "bg-violet-100 text-violet-700",
+  PURPLE: "bg-purple-100 text-purple-700",
+  FUCHSIA: "bg-fuchsia-100 text-fuchsia-700",
+  PINK: "bg-pink-100 text-pink-700",
+  ROSE: "bg-rose-100 text-rose-700",
+
+  SLATE: "bg-slate-100 text-slate-700",
+  GRAY: "bg-gray-100 text-gray-700",
+  ZINC: "bg-zinc-300 text-zinc-700",
+  NEUTRAL: "bg-neutral-100 text-neutral-700",
+  STONE: "bg-stone-200 text-stone-700",
+};
+
 function NoticeBoard() {
   const [notices, setNotices] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -90,7 +119,7 @@ function NoticeBoard() {
         setLoading(false);
       }
     },
-    [searchTerm, selectedDate, selected.id, limit, tab],
+    [searchTerm, selectedDate, selected.id, limit, tab, role],
   );
 
   useEffect(() => {
@@ -273,7 +302,7 @@ function NoticeBoard() {
                         <td className="border border-black px-4 py-3">
                           <span
                             className={`px-2 py-1 rounded text-xs ${
-                              n.category?.badgeClass ??
+                              CATEGORY_BADGE_CLASSES[n.category?.badgeClass] ??
                               "bg-gray-100 text-gray-700"
                             }`}
                           >
