@@ -82,7 +82,10 @@ export const getNotices = asyncHandler(async (req, res) => {
       n.id,
       n.title,
       n.created_at,
-      c.name AS category
+      c.id AS category_id,
+      c.name AS category_name,
+      c.badge_class AS category_badge_class
+
     FROM notices n
     JOIN notice_categories c ON c.id = n.notice_category_id
     ${where}
@@ -91,6 +94,7 @@ export const getNotices = asyncHandler(async (req, res) => {
     `,
     [...params, limit, offset],
   );
+
 
   const [[{ total }]] = await pool.query(
     `
@@ -102,9 +106,20 @@ export const getNotices = asyncHandler(async (req, res) => {
     params,
   );
 
+  const items = rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    created_at: row.created_at,
+    category: {
+      id: row.category_id,
+      name: row.category_name,
+      badgeClass: row.category_badge_class,
+    },
+  }));
+
   return res.json(
     new ApiResponse({
-      items: rows,
+      items,
       pagination: {
         page,
         limit,
@@ -130,7 +145,9 @@ export const getNoticeById = asyncHandler(async (req, res) => {
       n.content,
       n.audience,
       n.created_at,
-      c.name AS category,
+      c.id AS category_id,
+      c.name AS category_name,
+      c.badge_class AS category_badge_class,
       a.email AS posted_by
     FROM notices n
     JOIN notice_categories c ON c.id = n.notice_category_id
@@ -151,9 +168,23 @@ export const getNoticeById = asyncHandler(async (req, res) => {
     [id],
   );
 
-  notice.files = files;
+  const formattedNotice = {
+    id: notice.id,
+    title: notice.title,
+    content: notice.content,
+    audience: notice.audience,
+    created_at: notice.created_at,
+    posted_by: notice.posted_by,
+    category: {
+      id: notice.category_id,
+      name: notice.category_name,
+      badgeClass: notice.category_badge_class,
+    },
+    files,
+  };
 
-  return res.json(new ApiResponse(notice));
+  return res.json(new ApiResponse(formattedNotice));
+
 });
 
 export const createNotice = asyncHandler(async (req, res) => {
