@@ -20,7 +20,7 @@ export default function Nav() {
                 Our Portal
               </h1>
               <p className="text-gray-300 text-sm">
-                Official Notice Board of IITSNP
+                Official Notice Board of IIIT Sonepat
               </p>
             </div>
           </div>
