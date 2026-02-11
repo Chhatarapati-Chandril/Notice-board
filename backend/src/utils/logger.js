@@ -7,7 +7,5 @@ export const devLog = (...args) => {
 };
 
 export const devError = (...args) => {
-  if (isDev) {
-    console.error(...args);
-  }
+  console.error(...args);
 };
