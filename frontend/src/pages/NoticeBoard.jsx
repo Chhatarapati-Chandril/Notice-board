@@ -220,7 +220,7 @@ function NoticeBoard() {
                   value={selectedDate}
                   max={new Date().toLocaleDateString("en-CA")}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="border px-3 py-2 rounded-md text-sm"
+                  className="border cursor-pointer px-3 py-2 rounded-md text-sm"
                 />
 
                 <div className="relative w-72">
@@ -243,7 +243,7 @@ function NoticeBoard() {
                     setLimit(Number(e.target.value));
                     fetchNotices(1);
                   }}
-                  className="border px-3 py-2 rounded-md"
+                  className="border px-3 py-2 cursor-pointer rounded-md"
                 >
                   <option value={10}>10</option>
                   <option value={20}>20</option>
@@ -351,7 +351,7 @@ function NoticeBoard() {
                     ? setPagination((p) => ({ ...p, page: p.page - 1 }))
                     : fetchNotices(pagination.page - 1)
                 }
-                className="px-4 py-2 border rounded disabled:opacity-50"
+                className="px-4 py-2 border rounded disabled:opacity-50 cursor-pointer "
               >
                 Previous
               </button>
@@ -368,7 +368,7 @@ function NoticeBoard() {
                     ? setPagination((p) => ({ ...p, page: p.page + 1 }))
                     : fetchNotices(pagination.page + 1)
                 }
-                className="px-4 py-2 border rounded disabled:opacity-50"
+                className="px-4 py-2 border rounded disabled:opacity-50 cursor-pointer"
               >
                 Next
               </button>
@@ -400,7 +400,7 @@ function NoticeBoard() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
-                  className="absolute top-3 right-4 text-xl"
+                  className="absolute top-3 right-4 text-xl cursor-pointer"
                   onClick={() => setSelectedNotice(null)}
                 >
                   ✕
