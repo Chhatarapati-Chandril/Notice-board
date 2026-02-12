@@ -7,7 +7,7 @@ export const PASSWORD_RESET_TOKEN_EXPIRY = "10m"
 export const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: "None",
 };
 
 export const MIN_PAGE_NUMBER = 1;
