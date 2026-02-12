@@ -22,7 +22,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
       html,
     });
   } catch (error) {
-    devLog("EMAIL ERROR:", error);
+    devError("EMAIL ERROR:", error);
     throw new ApiError(500, error.message);
   }
 };
