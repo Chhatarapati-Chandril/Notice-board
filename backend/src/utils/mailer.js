@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import ApiError from "./ApiError.js";
-import { devLog } from "./logger.js";
+import { devError, devLog } from "./logger.js";
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -22,7 +22,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
       html,
     });
   } catch (error) {
-    devLog("email send failed");
+    devError("email send failed");
     throw new ApiError(500, "Unable to send email. Try again later.");
   }
 };
