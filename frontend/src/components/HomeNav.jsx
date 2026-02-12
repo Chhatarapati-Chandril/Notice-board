@@ -1,12 +1,15 @@
 import React from "react";
 import logo from "../assets/logo.png";
 import ProfileMenu from "./ProfileMenu";
+import LiveDateTime from "./LiveDateTime";
 
-export default function HomeNav({ title = "Our Portal", subtitle = "Official Notice Board of IIIT Sonepat" }) {
+export default function HomeNav({
+  title = "Our Portal",
+  subtitle = "Official Notice Board of IIIT Sonepat",
+}) {
   return (
     <nav className="w-full bg-[#0f2a44] fixed top-0 z-20 shadow-[0_10px_30px_rgba(30,90,168,0.15)]">
       <div className="flex justify-between items-center h-20 px-4">
-
         {/* LEFT */}
         <div className="flex items-center gap-3">
           <img
@@ -21,7 +24,11 @@ export default function HomeNav({ title = "Our Portal", subtitle = "Official Not
         </div>
 
         {/* RIGHT */}
-        <ProfileMenu />
+        {/* RIGHT */}
+        <div className="flex items-center gap-6">
+          <LiveDateTime />
+          <ProfileMenu />
+        </div>
       </div>
     </nav>
   );
