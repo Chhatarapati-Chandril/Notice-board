@@ -22,7 +22,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
       html,
     });
   } catch (error) {
-    devError("email send failed");
-    throw new ApiError(500, "Unable to send email. Try again later.");
+    devLog("EMAIL ERROR:", error);
+    throw new ApiError(500, error.message);
   }
 };
