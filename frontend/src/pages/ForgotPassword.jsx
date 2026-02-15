@@ -23,15 +23,25 @@ export default function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [resetContext, setResetContext] = useState(null);
+
   // STEP 1
   const handleStep1 = async (e) => {
     e.preventDefault();
     try {
+      let res;
+
       if (role === "STUDENT") {
-        await forgotPassword({ role: "STUDENT", roll_no: username });
+        res = await forgotPassword({ role: "STUDENT", roll_no: username });
       } else {
-        await forgotPassword({ role: "PROFESSOR", email: username });
+        res = await forgotPassword({ role: "PROFESSOR", email: username });
       }
+
+      const context = res.data.data.resetContext;
+      setResetContext(context);
+
+      sessionStorage.setItem("resetContext", context);
+
       setStep(2);
     } catch (err) {
       alert(err.response?.data?.message || "Failed to send OTP");
@@ -42,7 +52,7 @@ export default function ForgotPassword() {
   const handleStep2 = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post("/auth/verify-otp", { otp });
+      const res = await api.post("/auth/verify-otp", { otp, resetContext });
       setResetToken(res.data.data.reset_token);
       setStep(3);
     } catch (err) {
@@ -74,7 +84,6 @@ export default function ForgotPassword() {
 
       <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-4 pt-20">
         <div className="w-full max-w-sm bg-white shadow-[0_10px_30px_rgba(30,90,168,0.15)] p-6">
-          
           {/* Heading */}
           <h2 className="flex items-center justify-center gap-2 text-2xl font-semibold text-[#0f2a44] mb-2">
             Forgot Password
@@ -186,9 +195,7 @@ export default function ForgotPassword() {
                 />
                 <span
                   className="absolute right-3 top-9 cursor-pointer text-gray-500"
-                  onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                 </span>
